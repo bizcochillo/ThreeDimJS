@@ -1,7 +1,7 @@
 JavaScript starter kit. 
 Agenda:
-- Editor and Configurations: EditorConfig
-- Package Management
+- Editor and Configurations: EditorConfig and VSCode
+- Package Management: npm. bit.ly/jsdevpackagejson
 - Development Webservers
 - Automation
 - Transpiling
