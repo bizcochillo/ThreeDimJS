@@ -16,7 +16,7 @@
 				overflow: hidden;
 			}
 
-			#info {
+			#bar {
 				position: absolute;
 				top: 0px;
 				width: 100%;
@@ -31,8 +31,14 @@
 
 	<body>
 		<div>
-			<div id="container"></div>
-			<div id="info">Abelardo Palma - Playing with Three.JS</div>
+			<div id="container">
+
+      </div>
+			<div id="bar">
+        <input type="button" value="Load Circuit 1" onclick="load(1)" ></input>
+        <input type="button" value="Load Circuit 2" onclick="load(2)" ></input>
+        <span>Abelardo Palma - Playing with Three.JS</span>
+      </div>
 
 			<script type="text/javascript" src="lib/three.js"></script>
 			<script src="lib/OrbitControls.js"></script>
