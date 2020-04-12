@@ -7,6 +7,7 @@ var newPosition = [-30, 0, 4, "E"];
 var raycaster = new THREE.Raycaster();
 var mouse = new THREE.Vector2();
 var INTERSECTED;
+var elementsLoaded = [];
 
 var createLinearXSegment = function (x, y, z, length) {
   var segmentGeo = new THREE.BoxBufferGeometry(length, 5, 2);
@@ -88,21 +89,15 @@ var init = function() {
   var axes = new THREE.AxesHelper(50);
   scene.add(axes);
 
-
-
   var linearSegmentX = createLinearXSegment(0, 0, 5, 50);
-  //scene.add( linearSegmentX );
 
   var linearSegmentY = createLinearYSegment(25 + 10, 25 + 10, 5, 50);
-  //scene.add( linearSegmentY );
 
   var angleSlope = 45.0;
   var linearSlopeXZ = createSlopeXZSegment(0, 0, 0, 40, angleSlope);
-  //scene.add( linearSlopeXZ );
 
   var angleSlopeXY = -20.0;
   var linearSlopeXY = createSlopeXYSegment(20, 0, 0, 20, angleSlopeXY);
-  //scene.add(linearSlopeXY);
 
   var lengthSegment2 = 200;
   var linearSegmentX2 = createLinearXSegment(
@@ -111,7 +106,6 @@ var init = function() {
     40 * Math.sin(((2 * Math.PI) / 360) * angleSlope),
     lengthSegment2
   );
-  //scene.add( linearSegmentX2 );
 
   var curvedSegmentPos = createCurvedSegment(
     40 * Math.cos(((2 * Math.PI) / 360) * angleSlope) - CURVED_RADIUS,
@@ -121,7 +115,6 @@ var init = function() {
     0,
     (3 * Math.PI) / 2
   );
-  //scene.add( curvedSegmentPos );
 
   renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(window.devicePixelRatio);
@@ -131,11 +124,6 @@ var init = function() {
   //
 
   var controls = new THREE.OrbitControls(camera, renderer.domElement);
-
-  //
-
-  stats = new Stats();
-  container.appendChild(stats.dom);
 
   //
 
@@ -191,13 +179,19 @@ var render = function() {
 
 var load = function (circuit) {
 
+  function addElementToScene(element)
+  {
+    elementsLoaded.push(element);
+    scene.add(element);
+  }
+
   function addLinearXSegment(size, direction) {
     x = newPosition[0];
     y = newPosition[1];
     z = newPosition[2];
     var modif = direction === "E" ? 1 : -1;
 
-    scene.add(createLinearXSegment(x + (modif * size) / 2, y, z, size));
+    addElementToScene(createLinearXSegment(x + (modif * size) / 2, y, z, size));
 
     // calculate new position
     newPosition[0] = newPosition[0] + modif * size;
@@ -210,7 +204,9 @@ var load = function (circuit) {
     z = newPosition[2];
     var modif = direction === "N" ? 1 : -1;
     newPosition[1] = newPosition[1] + modif * size;
-    scene.add(createLinearYSegment(x, y + (modif * size) / 2, z, size));
+    var elementToAdd = createLinearYSegment(x, y + (modif * size) / 2, z, size);
+    elementsLoaded.push(elementToAdd);
+    addElementToScene(elementToAdd);
   }
 
   function addSlopeXZSegment(size, angle) {
@@ -222,7 +218,7 @@ var load = function (circuit) {
 
     newPosition[0] = newPosition[0] + size * Math.cos(angleInRad);
     newPosition[2] = newPosition[2] + size * Math.sin(angleInRad);
-    scene.add(createSlopeXZSegment(x, y, z, size, angle));
+    addElementToScene(createSlopeXZSegment(x, y, z, size, angle));
   }
 
   function addSlopeXYSegment(size, angle) {
@@ -239,7 +235,7 @@ var load = function (circuit) {
     }
     newPosition[0] = newPosition[0] + size * Math.cos(angleInRad);
     newPosition[1] = newPosition[2] + size * Math.sin(angleInRad);
-    scene.add(createSlopeXYSegment(x, y, z, size, angle));
+    addElementToScene(createSlopeXYSegment(x, y, z, size, angle));
   }
 
   function addCurvedSESegment(nextDirection) {
@@ -270,7 +266,7 @@ var load = function (circuit) {
         (3 * Math.PI) / 2
       );
 
-    scene.add(curvedSegmentSE);
+      addElementToScene(curvedSegmentSE);
   }
 
   function addCurvedSWSegment(nextDirection) {
@@ -302,7 +298,7 @@ var load = function (circuit) {
         0,
         Math.PI
       );
-    scene.add(curvedSegment3);
+      addElementToScene(curvedSegment3);
   }
 
   function addCurvedNESegment(nextDirection) {
@@ -333,7 +329,7 @@ var load = function (circuit) {
         0,
         0
       );
-    scene.add(curvedSegment);
+      addElementToScene(curvedSegment);
   }
 
   function addCurvedNWSegment(nextDirection) {
@@ -345,7 +341,7 @@ var load = function (circuit) {
     newPosition[0] = newPosition[0] + modif * CURVED_RADIUS;
     newPosition[1] = newPosition[1] + modif * CURVED_RADIUS;
     if (nextDirection === "S")
-      scene.add(
+    addElementToScene(
         createCurvedSegment(
           x + CURVED_RADIUS,
           y + modif * CURVED_RADIUS,
@@ -356,7 +352,7 @@ var load = function (circuit) {
         )
       );
     else
-      scene.add(
+    addElementToScene(
         createCurvedSegment(
           x + CURVED_RADIUS * 2,
           y,
@@ -416,7 +412,7 @@ var load = function (circuit) {
     y = newPosition[1];
     z = newPosition[2];
 
-    scene.add(createSlopeXZSegment(x, y, z, size, angleInGrad));
+    addElementToScene(createSlopeXZSegment(x, y, z, size, angleInGrad));
 
     var deltaX, deltaY, deltaZ;
     var direction = newPosition[3];
@@ -449,7 +445,7 @@ var load = function (circuit) {
     y = newPosition[1];
     z = newPosition[2];
 
-    scene.add(createSlopeXYSegment(x, y, z, size, angleInGrad));
+    addElementToScene(createSlopeXYSegment(x, y, z, size, angleInGrad));
 
     var deltaX, deltaY, deltaZ;
     var direction = newPosition[3];
@@ -587,6 +583,14 @@ var load = function (circuit) {
     circuit2();
   }
 };
+
+var remove = function() {
+  for (var i=0;i<elementsLoaded.length; i++)
+  {
+    scene.remove(elementsLoaded[i]);
+  }
+  elementsLoaded=[];
+}
 
 var onMouseMove = function (e) {
   mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
