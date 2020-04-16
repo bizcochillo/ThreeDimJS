@@ -4,47 +4,22 @@
 		<title>Play with ThreeJS - Conveyor Layout 3D tests</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-		<style>
-			body {
-				color: #ffffff;
-				font-family: Arial, Helvetica, sans-serif;
-				font-size: 13px;
-				text-align: center;
-				font-weight: bold;
-				background-color: #000000;
-				margin: 0px;
-				overflow: hidden;
-			}
-
-			#bar {
-				position: absolute;
-				top: 0px;
-				width: 100%;
-				padding: 5px;
-			}
-
-			a {
-				color: #ffffff;
-			}
-		</style>
+    <link rel="stylesheet" href="styles.css" type="text/css">
+    <script src="lib/three.js"></script>
+		<script src="lib/OrbitControls.js"></script>
+		<script src="lib/stats.min.js"></script>
 	</head>
-
 	<body>
 		<div>
-			<div id="container">
-
-      </div>
-			<div id="bar">
+      <div id="bar">
 				<input type="button" value="Load Circuit 1" onclick="load(1)" >
 				<input type="button" value="Load Circuit 2" onclick="load(2)" >
 				<input type="button" value="Remove" onclick="remove()" >
 				<span>Abelardo Palma - Playing with Three.JS</span>
       </div>
-
-			<script type="text/javascript" src="lib/three.js"></script>
-			<script src="lib/OrbitControls.js"></script>
-			<script src="lib/stats.min.js"></script>
-			<script src="lib/blocks.js" ></script>
+      <div id="container">
+      </div>
+      <script src="lib/blocks.js" ></script>
 		</div>
 	</body>
 </html>

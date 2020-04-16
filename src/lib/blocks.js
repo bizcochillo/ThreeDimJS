@@ -1,3 +1,4 @@
+
 const SEGMENT_YMAX = 5;
 const SEGMENT_ZMAX = 2;
 const CURVED_RADIUS = 7;
@@ -223,9 +224,7 @@ var load = function (circuit) {
 
   function addSlopeXYSegment(size, angle) {
     var angleInRad = ((2 * Math.PI) / 360) * angle;
-    var x = 0,
-      y = 0,
-      z = 0;
+    var x = 0, y = 0, z = 0;
     if (newPosition) {
       x = newPosition[0];
       y = newPosition[1];
@@ -270,9 +269,7 @@ var load = function (circuit) {
   }
 
   function addCurvedSWSegment(nextDirection) {
-    x = newPosition[0];
-    y = newPosition[1];
-    z = newPosition[2];
+    var x = newPosition[0], y = newPosition[1], z = newPosition[2];
 
     var modifX = nextDirection === "E" ? 1 : -1;
     var modifY = nextDirection === "E" ? -1 : 1;
