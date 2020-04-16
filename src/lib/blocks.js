@@ -3,7 +3,7 @@ const SEGMENT_YMAX = 5;
 const SEGMENT_ZMAX = 2;
 const CURVED_RADIUS = 7;
 
-var renderer, stats, scene, camera;
+var renderer, scene, camera;
 var newPosition = [-30, 0, 4, "E"];
 var raycaster = new THREE.Raycaster();
 var mouse = new THREE.Vector2();
@@ -134,8 +134,7 @@ var init = function() {
 var animate = function() {
   requestAnimationFrame(animate);
 
-  render();
-  stats.update();
+  render();  
 }
 
 var render = function() {
@@ -147,8 +146,7 @@ var render = function() {
     var i;
     var minDistance = Number.MAX_SAFE_INTEGER;
     var minIntersectedObject = null;
-    for (i = 0; i < intersects.length; i++) {
-      console.log(intersects[i].distance);
+    for (i = 0; i < intersects.length; i++) {      
       if (
         minIntersectedObject == null ||
         minDistance > intersects[i].distance
