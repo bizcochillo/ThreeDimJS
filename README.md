@@ -33,3 +33,6 @@ I like to set the following goals:
 
 * Reset the camera to the origin 
 
+For localtunnel use backup server if problems: 
+- lt -h "http://serverless.social" -p PORT
+

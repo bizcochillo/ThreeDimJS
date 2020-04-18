@@ -19,3 +19,62 @@ body {
 a {
   color: #ffffff;
 }
+.picker {
+  position: absolute;
+  top: 80px;
+  right: 50px;
+  width: 300px;
+  height: 150px;
+  overflow: hidden;
+  border: 1px solid #ccc;
+  background-color: #f1f1f1;
+}
+
+/* Style the buttons inside the tab */
+.picker button {
+  background-color: inherit;
+  width: 100%;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 14px 16px;
+  transition: 0.3s;
+  font-size: 17px;
+  display: block;
+}
+
+/* Change background color of buttons on hover */
+.picker button:hover {
+  background-color: #ddd;
+}
+
+/* Create an active/current tablink class */
+.picker button.active {
+  background-color: #ccc;
+}
+
+.editor {
+  position: absolute;
+  top: 250px;
+  bottom: 20px;
+  right: 50px;
+  width: 300px;  
+  border: 3px solid #00AD21;
+  overflow-y:auto
+}
+
+.editor div
+{
+  margin: 3px;
+  border-width: 1px;
+  border-style: solid;
+  border-color: blue;
+  padding: 3px;
+  display: inline-flex;
+}
+
+.editor-buttons {
+  display:flex;
+  justify-content: flex-end;
+  outline: 2px deeppink dashed;
+}

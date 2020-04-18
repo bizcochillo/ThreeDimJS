@@ -10,17 +10,15 @@ var mouse = new THREE.Vector2();
 var INTERSECTED;
 var elementsLoaded = [];
 
-/* TODO: for refactoring. 
-class HeadPosition
-{
-  constructor(x, y, z, orientation)
-  {    
+//TODO: for refactoring. 
+class HeadPosition {
+  constructor(x, y, z, orientation) {
     this.x = x;
     this.y = y;
     this.z = z;
     this.orientation = orientation;
   }
-} */
+}
 
 var createLinearXSegment = function (x, y, z, length) {
   var segmentGeo = new THREE.BoxBufferGeometry(length, 5, 2);
@@ -49,7 +47,7 @@ var createLinearYSegment = function (x, y, z, length) {
   return segmentMesh;
 };
 
-var init = function() {
+var init = function () {
   var container = document.getElementById("container");
 
   //
@@ -85,7 +83,7 @@ var init = function() {
     circleGeometry = new THREE.Geometry(),
     material = new THREE.LineBasicMaterial({ color: 0xffffff });
 
-  for (var i = 0; i <= segmentCount; i++) {
+  for (let i = 0; i <= segmentCount; i++) {
     var theta = (i / segmentCount) * Math.PI * 2;
     circleGeometry.vertices.push(
       new THREE.Vector3(Math.cos(theta) * radius, Math.sin(theta) * radius, 0)
@@ -143,13 +141,13 @@ var init = function() {
   window.addEventListener("resize", onWindowResize, false);
 }
 
-var animate = function() {
+var animate = function () {
   requestAnimationFrame(animate);
 
-  render();  
+  render();
 }
 
-var render = function() {
+var render = function () {
   // update the picking ray with the camera and mouse position
   raycaster.setFromCamera(mouse, camera);
   // calculate objects intersecting the picking ray
@@ -158,7 +156,7 @@ var render = function() {
     var i;
     var minDistance = Number.MAX_SAFE_INTEGER;
     var minIntersectedObject = null;
-    for (i = 0; i < intersects.length; i++) {      
+    for (i = 0; i < intersects.length; i++) {
       if (
         minIntersectedObject == null ||
         minDistance > intersects[i].distance
@@ -190,8 +188,7 @@ var render = function() {
 
 var load = function (circuit) {
 
-  function addElementToScene(element)
-  {
+  function addElementToScene(element) {
     elementsLoaded.push(element);
     scene.add(element);
   }
@@ -215,7 +212,7 @@ var load = function (circuit) {
     z = headerPosition[2];
     var modif = direction === "N" ? 1 : -1;
     headerPosition[1] = headerPosition[1] + modif * size;
-    var elementToAdd = createLinearYSegment(x, y + (modif * size) / 2, z, size);    
+    var elementToAdd = createLinearYSegment(x, y + (modif * size) / 2, z, size);
     addElementToScene(elementToAdd);
   }
 
@@ -274,7 +271,7 @@ var load = function (circuit) {
         (3 * Math.PI) / 2
       );
 
-      addElementToScene(curvedSegmentSE);
+    addElementToScene(curvedSegmentSE);
   }
 
   function addCurvedSWSegment(nextDirection) {
@@ -304,7 +301,7 @@ var load = function (circuit) {
         0,
         Math.PI
       );
-      addElementToScene(curvedSegment3);
+    addElementToScene(curvedSegment3);
   }
 
   function addCurvedNESegment(nextDirection) {
@@ -335,7 +332,7 @@ var load = function (circuit) {
         0,
         0
       );
-      addElementToScene(curvedSegment);
+    addElementToScene(curvedSegment);
   }
 
   function addCurvedNWSegment(nextDirection) {
@@ -347,7 +344,7 @@ var load = function (circuit) {
     headerPosition[0] = headerPosition[0] + modif * CURVED_RADIUS;
     headerPosition[1] = headerPosition[1] + modif * CURVED_RADIUS;
     if (nextDirection === "S")
-    addElementToScene(
+      addElementToScene(
         createCurvedSegment(
           x + CURVED_RADIUS,
           y + modif * CURVED_RADIUS,
@@ -358,7 +355,7 @@ var load = function (circuit) {
         )
       );
     else
-    addElementToScene(
+      addElementToScene(
         createCurvedSegment(
           x + CURVED_RADIUS * 2,
           y,
@@ -477,8 +474,7 @@ var load = function (circuit) {
     headerPosition[2] = headerPosition[2] + deltaZ;
   }
 
-  function moveHeader(position)
-  {
+  function moveHeader(position) {
     headerPosition = position;
   }
 
@@ -490,43 +486,40 @@ Add segment with vertical slope (XZ) (Parameters length, angleInGrads). V length
 Add turn to left segment (No parameters). L
 Add turn to right segment (No parameters). R For instance: M 0 0 0 N,F 30,L,F 100,V 30,F 100,H -30,F10
   */
- 
-  function processCircuit (circuitInfo)
-  {
+
+  function processCircuit(circuitInfo) {
     let tokens = circuitInfo.split(',');
-    for (let token of tokens)
-    {
+    for (let token of tokens) {
       let fields = token.split(' ');
-       switch (fields[0])
-       {
-          case 'M':
-            moveHeader([parseInt(fields[1]), parseInt(fields[2]), parseInt(fields[3]), fields[4]]);
-            break;
-          case 'F':
-            addLinearSegment(parseInt(fields[1]));
-            break;
-          case 'H':
-            addSlopeHorizontal(parseInt(fields[1]), parseInt(fields[2]));
-            break;
-          case 'V':
-            addSlopeVertical(parseInt(fields[1]), parseInt(fields[2]));
-            break;
-          case 'L':
-            addTurnToLeft();
-            break;
-          case 'R':
-            addTurnToRight();
-            break;
-          default:
-            throw "Token not recognized: " + token;
-       }
+      switch (fields[0]) {
+        case 'M':
+          moveHeader([parseInt(fields[1]), parseInt(fields[2]), parseInt(fields[3]), fields[4]]);
+          break;
+        case 'F':
+          addLinearSegment(parseInt(fields[1]));
+          break;
+        case 'H':
+          addSlopeHorizontal(parseInt(fields[1]), parseInt(fields[2]));
+          break;
+        case 'V':
+          addSlopeVertical(parseInt(fields[1]), parseInt(fields[2]));
+          break;
+        case 'L':
+          addTurnToLeft();
+          break;
+        case 'R':
+          addTurnToRight();
+          break;
+        default:
+          throw "Token not recognized: " + token;
+      }
     }
-  } 
+  }
 
   function circuit1() {
-    
+
     let circuit1Info = 'M -5 -60 1 E,F 10,H 15 15,F 10,L,F 10,H 15 -15,F 10,V 15 30,F 20,V 15 -30,F 10,H 15 15,F 10,L,F 10,H 15 -15,F 20,H 15 15,F 10,L,F 10,H 15 -15,F 10,V 15 30,F 20,V 15 -30,F 10,H 15 15,F 10,L,F 10,H 15 -15,F 10';
-    processCircuit(circuit1Info);    
+    processCircuit(circuit1Info);
   }
 
   function circuit2() {
@@ -538,7 +531,7 @@ Add turn to right segment (No parameters). R For instance: M 0 0 0 N,F 30,L,F 10
   window.requestAnimationFrame(render);
   window.addEventListener("mousemove", onMouseMove, false);
 
-  if (circuit===1){
+  if (circuit === 1) {
     circuit1();
   }
   else {
@@ -546,12 +539,11 @@ Add turn to right segment (No parameters). R For instance: M 0 0 0 N,F 30,L,F 10
   }
 };
 
-var remove = function() {
-  for (var i=0;i<elementsLoaded.length; i++)
-  {
+var remove = function () {
+  for (var i = 0; i < elementsLoaded.length; i++) {
     scene.remove(elementsLoaded[i]);
   }
-  elementsLoaded=[];
+  elementsLoaded = [];
 }
 
 var onMouseMove = function (e) {
@@ -559,14 +551,14 @@ var onMouseMove = function (e) {
   mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 };
 
-var onWindowResize = function() {
+var onWindowResize = function () {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
 
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-var createSlopeXZSegment = function(x, y, z, length, angleInGrad) {
+var createSlopeXZSegment = function (x, y, z, length, angleInGrad) {
   var segmentLength = length;
   var angle = ((2 * Math.PI) / 360) * angleInGrad; // in radians
 
@@ -638,7 +630,7 @@ var createSlopeXZSegment = function(x, y, z, length, angleInGrad) {
   return geoSlopeMesh;
 }
 
-var createCurvedSegment = function(x, y, z, rotX, rotY, rotZ) {
+var createCurvedSegment = function (x, y, z, rotX, rotY, rotZ) {
   var curvedSegment2D = new THREE.Shape();
   curvedSegment2D.absarc(
     0,
@@ -674,7 +666,7 @@ var createCurvedSegment = function(x, y, z, rotX, rotY, rotZ) {
   return meshGeo;
 }
 
-var createSlopeXYSegment = function(x, y, z, length, angleInGrad) {
+var createSlopeXYSegment = function (x, y, z, length, angleInGrad) {
   var segmentLength = length;
   var angle = ((2 * Math.PI) / 360) * angleInGrad; // in radians
 
