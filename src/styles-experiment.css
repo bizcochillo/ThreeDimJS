@@ -1,0 +1,95 @@
+body {
+    color: #ffffff;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 13px;
+    text-align: center;
+    font-weight: bold;
+    background-color: #000000;
+    margin: 0px;
+    overflow: hidden;
+}
+
+#bar {
+    position: absolute;
+    top: 0px;
+    width: 100%;
+    padding: 5px;
+}
+
+a {
+    color: #ffffff;
+}
+
+.picker {
+    position: absolute;
+    top: 80px;
+    right: 50px;
+    width: 300px;
+    height: 150px;
+    overflow: hidden;
+    border: 1px solid #ccc;
+    background-color: #f1f1f1;
+    overflow-y: auto
+}
+
+.circuit-options {
+    display: flex;
+}
+
+
+/* Style the buttons inside the tab */
+
+.picker button {
+    background-color: inherit;
+    width: 100%;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 14px 16px;
+    transition: 0.3s;
+    font-size: 17px;
+    display: block;
+}
+
+
+/* Change background color of buttons on hover */
+
+.picker button:hover {
+    background-color: #ddd;
+}
+
+
+/* Create an active/current tablink class */
+
+.picker button.active {
+    background-color: #ccc;
+}
+
+.editor {
+    position: absolute;
+    top: 250px;
+    bottom: 20px;
+    right: 50px;
+    width: 300px;
+    border: 3px solid #00AD21;
+    overflow-y: auto;
+}
+
+.editor-tokens {
+    margin: 3px;
+    border-width: 1px;
+    border-style: solid;
+    border-color: blue;
+    text-align: left;
+    background-color: blueviolet;
+    padding: 3px;
+    display: block;
+}
+
+.editor-buttons {
+    float: right;
+}
+
+.editor-button {
+    border-radius: 50%;
+}

@@ -2,21 +2,30 @@
 <html lang="en">
 
 <head>
-	<title>Play with ThreeJS - Conveyor Layout 3D tests</title>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-	<link rel="stylesheet" href="styles.css" type="text/css">
-	<script src="lib/app-experiment.js"></script>
+    <title>Play with ThreeJS - Conveyor Layout 3D tests</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link rel="stylesheet" href="styles-experiment.css" type="text/css">
+    <script src="lib/app-experiment.js"></script>
 </head>
 
 <body>
-	<div>
-		<div class="picker">
-			<button class="tablinks" onclick="loadPattern1()">Circuit 1</button>
-			<button class="tablinks" onclick="loadPattern2()">Circuit 2</button>			
-		</div>
-		<div class="editor"></div>
-	</div>
+    <div>
+        <div class="picker">
+            <div class="circuit-options">
+                <button>r</button>
+                <button>c</button>
+                <button>x</button>
+                <button onclick="addCircuit()">+</button>
+            </div>
+            <button class="tablinks" onclick="loadPattern1()">Circuit 1</button>
+            <button class="tablinks" onclick="loadPattern2()">Circuit 2</button>
+        </div>
+
+
+
+        <div class="editor"></div>
+    </div>
 </body>
 
 </html>
