@@ -22,24 +22,35 @@ a {
 
 .picker {
     position: absolute;
-    top: 80px;
+    top: 85px;
     right: 50px;
     width: 300px;
     height: 150px;
     overflow: hidden;
     border: 1px solid #ccc;
     background-color: #f1f1f1;
-    overflow-y: auto
+    overflow-y: auto;
 }
 
 .circuit-options {
-    display: flex;
+  position: absolute;
+  top: 60px;
+  right: 50px;
+  width: 300px;
+  overflow: hidden;
+  border: 1px solid #ccc;
+  background-color: #f1f1f1;
 }
 
+.circuit-options button {
+  padding: 2px;
+  border-radius: 50%;
+  width:20px;
+}
 
 /* Style the buttons inside the tab */
 
-.picker button {
+.circuit-button {
     background-color: inherit;
     width: 100%;
     border: none;
@@ -54,14 +65,14 @@ a {
 
 /* Change background color of buttons on hover */
 
-.picker button:hover {
+.circuit-button:hover {
     background-color: #ddd;
 }
 
 
 /* Create an active/current tablink class */
 
-.picker button.active {
+.circuit-button.active {
     background-color: #ccc;
 }
 
@@ -84,6 +95,7 @@ a {
     background-color: blueviolet;
     padding: 3px;
     display: block;
+    font-family: 'Courier New', Courier, monospace;
 }
 
 .editor-buttons {
