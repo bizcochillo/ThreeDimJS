@@ -10,7 +10,7 @@ var mouse = new THREE.Vector2();
 var INTERSECTED;
 var elementsLoaded = [];
 
-//TODO: for refactoring. 
+//TODO: for refactoring.
 class HeadPosition {
   constructor(x, y, z, orientation) {
     this.x = x;
@@ -478,7 +478,7 @@ var load = function (circuit) {
     headerPosition = position;
   }
 
-  /* 
+  /*
 Establish header position (Parameters x, y, z, orientation). M x y z direction
 Add linear segment in the direction of the header (Parameters length). F length
 Add segment with horizontal slope (XY) (Parameters length, angleInGrads). H length degrees
@@ -531,12 +531,7 @@ Add turn to right segment (No parameters). R For instance: M 0 0 0 N,F 30,L,F 10
   window.requestAnimationFrame(render);
   window.addEventListener("mousemove", onMouseMove, false);
 
-  if (circuit === 1) {
-    circuit1();
-  }
-  else {
-    circuit2();
-  }
+  processCircuit(circuit);
 };
 
 var remove = function () {

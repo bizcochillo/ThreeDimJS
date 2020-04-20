@@ -4,20 +4,22 @@ function loadCircuit(circuit) {
   let element = document.getElementsByClassName('editor')[0];
   element.innerHTML = '';
   if (!circuit.code) return;
+  remove(); // remove the circuit previously load
   for (let token of circuit.tokens) {
     let container = createTokenContainer(token);
     element.appendChild(container);
   }
+  load(circuit.tokens.join());
 }
 
 function createTokenContainer(token) {
   let container = document.createElement("DIV");
   container.className = "editor-tokens";
-  container.contentEditable = true;
+  container.contentEditable = "true";
   container.addEventListener("input", changeTextTokenHandler);
   let editionOptions = document.createElement("DIV");
   editionOptions.className = "editor-buttons";
-  editionOptions.contentEditable = false;
+  editionOptions.contentEditable = "false";
   let buttonRemove = document.createElement("BUTTON");
   buttonRemove.className = "editor-button";
   buttonRemove.innerText = "x";
@@ -180,7 +182,7 @@ window.onload = function () {
 };
 
 function openNav() {
-  document.getElementById("mySidepanel").style.width = "350px";
+  document.getElementById("mySidepanel").style.width = "400px";
 }
 
 function closeNav() {
