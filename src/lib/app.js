@@ -1,4 +1,3 @@
-
 const SEGMENT_YMAX = 5;
 const SEGMENT_ZMAX = 2;
 const CURVED_RADIUS = 7;
@@ -9,6 +8,7 @@ var raycaster = new THREE.Raycaster();
 var mouse = new THREE.Vector2();
 var INTERSECTED;
 var elementsLoaded = [];
+var circuitHandler;
 
 //TODO: for refactoring.
 class HeadPosition {
@@ -20,7 +20,7 @@ class HeadPosition {
   }
 }
 
-var createLinearXSegment = function (x, y, z, length) {
+function createLinearXSegment(x, y, z, length) {
   var segmentGeo = new THREE.BoxBufferGeometry(length, 5, 2);
   var segmentMesh = new THREE.Mesh(
     segmentGeo,
@@ -34,7 +34,7 @@ var createLinearXSegment = function (x, y, z, length) {
 };
 
 //wow! this smells!
-var createLinearYSegment = function (x, y, z, length) {
+function createLinearYSegment(x, y, z, length) {
   var segmentGeo = new THREE.BoxBufferGeometry(5, length, 2);
   var segmentMesh = new THREE.Mesh(
     segmentGeo,
@@ -47,7 +47,7 @@ var createLinearYSegment = function (x, y, z, length) {
   return segmentMesh;
 };
 
-var init = function () {
+function init() {
   var container = document.getElementById("container");
 
   //
@@ -139,15 +139,15 @@ var init = function () {
   //
 
   window.addEventListener("resize", onWindowResize, false);
-}
+};
 
-var animate = function () {
+function animate() {
   requestAnimationFrame(animate);
 
   render();
-}
+};
 
-var render = function () {
+function render() {
   // update the picking ray with the camera and mouse position
   raycaster.setFromCamera(mouse, camera);
   // calculate objects intersecting the picking ray
@@ -165,8 +165,7 @@ var render = function () {
         minDistance = intersects[i].distance;
       }
     }
-    if (INTERSECTED)
-      INTERSECTED.material.color.setHex(INTERSECTED.currentHex);
+    if (INTERSECTED) INTERSECTED.material.color.setHex(INTERSECTED.currentHex);
     // store reference to closest object as current intersection object
     INTERSECTED = minIntersectedObject;
     // store color of closest object (for later restoration)
@@ -176,309 +175,317 @@ var render = function () {
   } // there are no intersections
   else {
     // restore previous intersection object (if it exists) to its original color
-    if (INTERSECTED)
-      INTERSECTED.material.color.setHex(INTERSECTED.currentHex);
+    if (INTERSECTED) INTERSECTED.material.color.setHex(INTERSECTED.currentHex);
     // remove previous intersection object reference
     //     by setting current intersection object to "nothing"
     INTERSECTED = null;
   }
 
   renderer.render(scene, camera);
+};
+
+function addElementToScene(element) {
+  elementsLoaded.push(element);
+  scene.add(element);
 }
 
-var load = function (circuit) {
+function addLinearXSegment(size, direction) {
+  x = headerPosition[0];
+  y = headerPosition[1];
+  z = headerPosition[2];
+  var modif = direction === "E" ? 1 : -1;
 
-  function addElementToScene(element) {
-    elementsLoaded.push(element);
-    scene.add(element);
-  }
+  addElementToScene(createLinearXSegment(x + (modif * size) / 2, y, z, size));
 
-  function addLinearXSegment(size, direction) {
+  // calculate new position
+  headerPosition[0] = headerPosition[0] + modif * size;
+}
+
+//This smells. I'm not proud of it.
+function addLinearYSegment(size, direction) {
+  x = headerPosition[0];
+  y = headerPosition[1];
+  z = headerPosition[2];
+  var modif = direction === "N" ? 1 : -1;
+  headerPosition[1] = headerPosition[1] + modif * size;
+  var elementToAdd = createLinearYSegment(x, y + (modif * size) / 2, z, size);
+  addElementToScene(elementToAdd);
+}
+
+function addSlopeXZSegment(size, angle) {
+  var angleInRad = ((2 * Math.PI) / 360) * angle;
+
+  var x = headerPosition[0];
+  var y = headerPosition[1];
+  var z = headerPosition[2];
+
+  headerPosition[0] = headerPosition[0] + size * Math.cos(angleInRad);
+  headerPosition[2] = headerPosition[2] + size * Math.sin(angleInRad);
+  addElementToScene(createSlopeXZSegment(x, y, z, size, angle));
+}
+
+function addSlopeXYSegment(size, angle) {
+  var angleInRad = ((2 * Math.PI) / 360) * angle;
+  var x = 0,
+    y = 0,
+    z = 0;
+  if (headerPosition) {
     x = headerPosition[0];
     y = headerPosition[1];
     z = headerPosition[2];
-    var modif = direction === "E" ? 1 : -1;
-
-    addElementToScene(createLinearXSegment(x + (modif * size) / 2, y, z, size));
-
-    // calculate new position
-    headerPosition[0] = headerPosition[0] + modif * size;
+  } else {
+    headerPosition = [0, 0, 0];
   }
+  headerPosition[0] = headerPosition[0] + size * Math.cos(angleInRad);
+  headerPosition[1] = headerPosition[2] + size * Math.sin(angleInRad);
+  addElementToScene(createSlopeXYSegment(x, y, z, size, angle));
+}
 
-  //This smells. I'm not proud of it.
-  function addLinearYSegment(size, direction) {
-    x = headerPosition[0];
-    y = headerPosition[1];
+function addCurvedSESegment(nextDirection) {
+  var x = headerPosition[0];
+  var y = headerPosition[1];
+  var z = headerPosition[2];
+
+  var modif = nextDirection === "W" ? -1 : 1;
+  headerPosition[0] = headerPosition[0] + modif * CURVED_RADIUS;
+  headerPosition[1] = headerPosition[1] + modif * CURVED_RADIUS;
+  var curvedSegmentSE;
+  if (nextDirection === "N")
+    curvedSegmentSE = createCurvedSegment(
+      x - CURVED_RADIUS,
+      y + CURVED_RADIUS,
+      z - SEGMENT_ZMAX / 2,
+      0,
+      0,
+      (3 * Math.PI) / 2
+    );
+  else
+    curvedSegmentSE = createCurvedSegment(
+      x - CURVED_RADIUS * 2,
+      y,
+      z - SEGMENT_ZMAX / 2,
+      0,
+      0,
+      (3 * Math.PI) / 2
+    );
+
+  addElementToScene(curvedSegmentSE);
+}
+
+function addCurvedSWSegment(nextDirection) {
+  var x = headerPosition[0],
+    y = headerPosition[1],
     z = headerPosition[2];
-    var modif = direction === "N" ? 1 : -1;
-    headerPosition[1] = headerPosition[1] + modif * size;
-    var elementToAdd = createLinearYSegment(x, y + (modif * size) / 2, z, size);
-    addElementToScene(elementToAdd);
-  }
 
-  function addSlopeXZSegment(size, angle) {
-    var angleInRad = ((2 * Math.PI) / 360) * angle;
+  var modifX = nextDirection === "E" ? 1 : -1;
+  var modifY = nextDirection === "E" ? -1 : 1;
+  headerPosition[0] = headerPosition[0] + modifX * CURVED_RADIUS;
+  headerPosition[1] = headerPosition[1] + modifY * CURVED_RADIUS;
 
-    var x = headerPosition[0];
-    var y = headerPosition[1];
-    var z = headerPosition[2];
+  var curvedSegment3;
+  if (nextDirection === "E")
+    curvedSegment3 = createCurvedSegment(
+      x + CURVED_RADIUS,
+      y + CURVED_RADIUS,
+      z - SEGMENT_ZMAX / 2,
+      0,
+      0,
+      Math.PI
+    );
+  else
+    curvedSegment3 = createCurvedSegment(
+      x,
+      y + CURVED_RADIUS * 2,
+      z - SEGMENT_ZMAX / 2,
+      0,
+      0,
+      Math.PI
+    );
+  addElementToScene(curvedSegment3);
+}
 
-    headerPosition[0] = headerPosition[0] + size * Math.cos(angleInRad);
-    headerPosition[2] = headerPosition[2] + size * Math.sin(angleInRad);
-    addElementToScene(createSlopeXZSegment(x, y, z, size, angle));
-  }
+function addCurvedNESegment(nextDirection) {
+  x = headerPosition[0];
+  y = headerPosition[1];
+  z = headerPosition[2];
 
-  function addSlopeXYSegment(size, angle) {
-    var angleInRad = ((2 * Math.PI) / 360) * angle;
-    var x = 0, y = 0, z = 0;
-    if (headerPosition) {
-      x = headerPosition[0];
-      y = headerPosition[1];
-      z = headerPosition[2];
-    } else {
-      headerPosition = [0, 0, 0];
-    }
-    headerPosition[0] = headerPosition[0] + size * Math.cos(angleInRad);
-    headerPosition[1] = headerPosition[2] + size * Math.sin(angleInRad);
-    addElementToScene(createSlopeXYSegment(x, y, z, size, angle));
-  }
+  var modifX = nextDirection === "W" ? -1 : 1;
+  var modifY = nextDirection === "S" ? -1 : 1;
+  headerPosition[0] = headerPosition[0] + modifX * CURVED_RADIUS;
+  headerPosition[1] = headerPosition[1] + modifY * CURVED_RADIUS;
+  var curvedSegment;
+  if (nextDirection === "W")
+    curvedSegment = createCurvedSegment(
+      x - CURVED_RADIUS,
+      y - CURVED_RADIUS,
+      z - SEGMENT_ZMAX / 2,
+      0,
+      0,
+      0
+    );
+  else
+    curvedSegment = createCurvedSegment(
+      x,
+      y - CURVED_RADIUS * 2,
+      z - SEGMENT_ZMAX / 2,
+      0,
+      0,
+      0
+    );
+  addElementToScene(curvedSegment);
+}
 
-  function addCurvedSESegment(nextDirection) {
-    var x = headerPosition[0];
-    var y = headerPosition[1];
-    var z = headerPosition[2];
+function addCurvedNWSegment(nextDirection) {
+  x = headerPosition[0];
+  y = headerPosition[1];
+  z = headerPosition[2];
 
-    var modif = nextDirection === "W" ? -1 : 1;
-    headerPosition[0] = headerPosition[0] + modif * CURVED_RADIUS;
-    headerPosition[1] = headerPosition[1] + modif * CURVED_RADIUS;
-    var curvedSegmentSE;
-    if (nextDirection === "N")
-      curvedSegmentSE = createCurvedSegment(
-        x - CURVED_RADIUS,
-        y + CURVED_RADIUS,
+  var modif = nextDirection === "S" ? -1 : 1;
+  headerPosition[0] = headerPosition[0] + modif * CURVED_RADIUS;
+  headerPosition[1] = headerPosition[1] + modif * CURVED_RADIUS;
+  if (nextDirection === "S")
+    addElementToScene(
+      createCurvedSegment(
+        x + CURVED_RADIUS,
+        y + modif * CURVED_RADIUS,
         z - SEGMENT_ZMAX / 2,
         0,
         0,
-        (3 * Math.PI) / 2
-      );
-    else
-      curvedSegmentSE = createCurvedSegment(
-        x - CURVED_RADIUS * 2,
+        Math.PI / 2
+      )
+    );
+  else
+    addElementToScene(
+      createCurvedSegment(
+        x + CURVED_RADIUS * 2,
         y,
         z - SEGMENT_ZMAX / 2,
         0,
         0,
-        (3 * Math.PI) / 2
-      );
+        Math.PI / 2
+      )
+    );
+}
 
-    addElementToScene(curvedSegmentSE);
+function addLinearSegment(size) {
+  var direction = headerPosition[3];
+  if (direction === "E" || direction === "W")
+    addLinearXSegment(size, direction);
+  else addLinearYSegment(size, direction);
+}
+
+function TurnToLeft(position) {
+  if (position === "N") return "W";
+  if (position === "E") return "N";
+  if (position === "S") return "E";
+  if (position === "W") return "S";
+}
+
+function TurnToRight(position) {
+  if (position === "N") return "E";
+  if (position === "E") return "S";
+  if (position === "S") return "W";
+  if (position === "W") return "N";
+}
+
+function addTurnToLeft() {
+  var startDirection = headerPosition[3];
+  var nextDirection = TurnToLeft(startDirection);
+  if (startDirection === "N") addCurvedNESegment(nextDirection);
+  if (startDirection === "E") addCurvedSESegment(nextDirection);
+  if (startDirection === "S") addCurvedSWSegment(nextDirection);
+  if (startDirection === "W") addCurvedNWSegment(nextDirection);
+  headerPosition[3] = nextDirection;
+}
+
+function addTurnToRight() {
+  var startDirection = headerPosition[3];
+  var nextDirection = TurnToRight(startDirection);
+  if (startDirection === "N") addCurvedNWSegment(nextDirection);
+  if (startDirection === "E") addCurvedNESegment(nextDirection);
+  if (startDirection === "S") addCurvedSESegment(nextDirection);
+  if (startDirection === "W") addCurvedSWSegment(nextDirection);
+  headerPosition[3] = nextDirection;
+}
+
+function addSlopeVertical(size, angleInGrad) {
+  var angleInRad = ((2 * Math.PI) / 360) * angleInGrad;
+
+  x = headerPosition[0];
+  y = headerPosition[1];
+  z = headerPosition[2];
+
+  addElementToScene(createSlopeXZSegment(x, y, z, size, angleInGrad));
+
+  var deltaX, deltaY, deltaZ;
+  var direction = headerPosition[3];
+  if (direction === "N") {
+    deltaX = 0;
+    deltaY = size * Math.cos(angleInRad);
   }
-
-  function addCurvedSWSegment(nextDirection) {
-    var x = headerPosition[0], y = headerPosition[1], z = headerPosition[2];
-
-    var modifX = nextDirection === "E" ? 1 : -1;
-    var modifY = nextDirection === "E" ? -1 : 1;
-    headerPosition[0] = headerPosition[0] + modifX * CURVED_RADIUS;
-    headerPosition[1] = headerPosition[1] + modifY * CURVED_RADIUS;
-
-    var curvedSegment3;
-    if (nextDirection === "E")
-      curvedSegment3 = createCurvedSegment(
-        x + CURVED_RADIUS,
-        y + CURVED_RADIUS,
-        z - SEGMENT_ZMAX / 2,
-        0,
-        0,
-        Math.PI
-      );
-    else
-      curvedSegment3 = createCurvedSegment(
-        x,
-        y + CURVED_RADIUS * 2,
-        z - SEGMENT_ZMAX / 2,
-        0,
-        0,
-        Math.PI
-      );
-    addElementToScene(curvedSegment3);
+  if (direction === "E") {
+    deltaX = size * Math.cos(angleInRad);
+    deltaY = 0;
   }
-
-  function addCurvedNESegment(nextDirection) {
-    x = headerPosition[0];
-    y = headerPosition[1];
-    z = headerPosition[2];
-
-    var modifX = nextDirection === "W" ? -1 : 1;
-    var modifY = nextDirection === "S" ? -1 : 1;
-    headerPosition[0] = headerPosition[0] + modifX * CURVED_RADIUS;
-    headerPosition[1] = headerPosition[1] + modifY * CURVED_RADIUS;
-    var curvedSegment;
-    if (nextDirection === "W")
-      curvedSegment = createCurvedSegment(
-        x - CURVED_RADIUS,
-        y - CURVED_RADIUS,
-        z - SEGMENT_ZMAX / 2,
-        0,
-        0,
-        0
-      );
-    else
-      curvedSegment = createCurvedSegment(
-        x,
-        y - CURVED_RADIUS * 2,
-        z - SEGMENT_ZMAX / 2,
-        0,
-        0,
-        0
-      );
-    addElementToScene(curvedSegment);
+  if (direction === "S") {
+    deltaX = 0;
+    deltaY = -size * Math.cos(angleInRad);
   }
-
-  function addCurvedNWSegment(nextDirection) {
-    x = headerPosition[0];
-    y = headerPosition[1];
-    z = headerPosition[2];
-
-    var modif = nextDirection === "S" ? -1 : 1;
-    headerPosition[0] = headerPosition[0] + modif * CURVED_RADIUS;
-    headerPosition[1] = headerPosition[1] + modif * CURVED_RADIUS;
-    if (nextDirection === "S")
-      addElementToScene(
-        createCurvedSegment(
-          x + CURVED_RADIUS,
-          y + modif * CURVED_RADIUS,
-          z - SEGMENT_ZMAX / 2,
-          0,
-          0,
-          Math.PI / 2
-        )
-      );
-    else
-      addElementToScene(
-        createCurvedSegment(
-          x + CURVED_RADIUS * 2,
-          y,
-          z - SEGMENT_ZMAX / 2,
-          0,
-          0,
-          Math.PI / 2
-        )
-      );
+  if (direction === "W") {
+    deltaX = -size * Math.cos(angleInRad);
+    deltaY = 0;
   }
+  deltaZ = size * Math.sin(angleInRad);
+  headerPosition[0] = headerPosition[0] + deltaX;
+  headerPosition[1] = headerPosition[1] + deltaY;
+  headerPosition[2] = headerPosition[2] + deltaZ;
+}
 
-  function addLinearSegment(size) {
-    var direction = headerPosition[3];
-    if (direction === "E" || direction === "W")
-      addLinearXSegment(size, direction);
-    else addLinearYSegment(size, direction);
+function addSlopeHorizontal(size, angleInGrad) {
+  var angleInRad = ((2 * Math.PI) / 360) * angleInGrad;
+
+  x = headerPosition[0];
+  y = headerPosition[1];
+  z = headerPosition[2];
+
+  addElementToScene(createSlopeXYSegment(x, y, z, size, angleInGrad));
+
+  var deltaX, deltaY, deltaZ;
+  var direction = headerPosition[3];
+  if (direction === "N") {
+    deltaX = -size * Math.sin(angleInRad);
+    deltaY = size * Math.cos(angleInRad);
   }
-
-  function TurnToLeft(position) {
-    if (position === "N") return "W";
-    if (position === "E") return "N";
-    if (position === "S") return "E";
-    if (position === "W") return "S";
+  if (direction === "E") {
+    deltaX = size * Math.cos(angleInRad);
+    deltaY = size * Math.sin(angleInRad);
   }
-
-  function TurnToRight(position) {
-    if (position === "N") return "E";
-    if (position === "E") return "S";
-    if (position === "S") return "W";
-    if (position === "W") return "N";
+  if (direction === "S") {
+    deltaX = size * Math.sin(angleInRad);
+    deltaY = -size * Math.cos(angleInRad);
   }
-
-  function addTurnToLeft() {
-    var startDirection = headerPosition[3];
-    var nextDirection = TurnToLeft(startDirection);
-    if (startDirection === "N") addCurvedNESegment(nextDirection);
-    if (startDirection === "E") addCurvedSESegment(nextDirection);
-    if (startDirection === "S") addCurvedSWSegment(nextDirection);
-    if (startDirection === "W") addCurvedNWSegment(nextDirection);
-    headerPosition[3] = nextDirection;
+  if (direction === "W") {
+    deltaX = -size * Math.cos(angleInRad);
+    deltaY = -size * Math.sin(angleInRad);
   }
+  deltaZ = 0;
+  headerPosition[0] = headerPosition[0] + deltaX;
+  headerPosition[1] = headerPosition[1] + deltaY;
+  headerPosition[2] = headerPosition[2] + deltaZ;
+}
 
-  function addTurnToRight() {
-    var startDirection = headerPosition[3];
-    var nextDirection = TurnToRight(startDirection);
-    if (startDirection === "N") addCurvedNWSegment(nextDirection);
-    if (startDirection === "E") addCurvedNESegment(nextDirection);
-    if (startDirection === "S") addCurvedSESegment(nextDirection);
-    if (startDirection === "W") addCurvedSWSegment(nextDirection);
-    headerPosition[3] = nextDirection;
-  }
+function moveHeader(position) {
+  headerPosition = position;
+}
 
-  function addSlopeVertical(size, angleInGrad) {
-    var angleInRad = ((2 * Math.PI) / 360) * angleInGrad;
+function load(circuit) {
+  window.requestAnimationFrame(render);
+  window.addEventListener("mousemove", onMouseMove, false);
 
-    x = headerPosition[0];
-    y = headerPosition[1];
-    z = headerPosition[2];
+  processCircuit(circuit);
+}
 
-    addElementToScene(createSlopeXZSegment(x, y, z, size, angleInGrad));
-
-    var deltaX, deltaY, deltaZ;
-    var direction = headerPosition[3];
-    if (direction === "N") {
-      deltaX = 0;
-      deltaY = size * Math.cos(angleInRad);
-    }
-    if (direction === "E") {
-      deltaX = size * Math.cos(angleInRad);
-      deltaY = 0;
-    }
-    if (direction === "S") {
-      deltaX = 0;
-      deltaY = -size * Math.cos(angleInRad);
-    }
-    if (direction === "W") {
-      deltaX = -size * Math.cos(angleInRad);
-      deltaY = 0;
-    }
-    deltaZ = size * Math.sin(angleInRad);
-    headerPosition[0] = headerPosition[0] + deltaX;
-    headerPosition[1] = headerPosition[1] + deltaY;
-    headerPosition[2] = headerPosition[2] + deltaZ;
-  }
-
-  function addSlopeHorizontal(size, angleInGrad) {
-    var angleInRad = ((2 * Math.PI) / 360) * angleInGrad;
-
-    x = headerPosition[0];
-    y = headerPosition[1];
-    z = headerPosition[2];
-
-    addElementToScene(createSlopeXYSegment(x, y, z, size, angleInGrad));
-
-    var deltaX, deltaY, deltaZ;
-    var direction = headerPosition[3];
-    if (direction === "N") {
-      deltaX = -size * Math.sin(angleInRad);
-      deltaY = size * Math.cos(angleInRad);
-    }
-    if (direction === "E") {
-      deltaX = size * Math.cos(angleInRad);
-      deltaY = size * Math.sin(angleInRad);
-    }
-    if (direction === "S") {
-      deltaX = size * Math.sin(angleInRad);
-      deltaY = -size * Math.cos(angleInRad);
-    }
-    if (direction === "W") {
-      deltaX = -size * Math.cos(angleInRad);
-      deltaY = -size * Math.sin(angleInRad);
-    }
-    deltaZ = 0;
-    headerPosition[0] = headerPosition[0] + deltaX;
-    headerPosition[1] = headerPosition[1] + deltaY;
-    headerPosition[2] = headerPosition[2] + deltaZ;
-  }
-
-  function moveHeader(position) {
-    headerPosition = position;
-  }
-
-  /*
+/*
 Establish header position (Parameters x, y, z, orientation). M x y z direction
 Add linear segment in the direction of the header (Parameters length). F length
 Add segment with horizontal slope (XY) (Parameters length, angleInGrads). H length degrees
@@ -486,74 +493,60 @@ Add segment with vertical slope (XZ) (Parameters length, angleInGrads). V length
 Add turn to left segment (No parameters). L
 Add turn to right segment (No parameters). R For instance: M 0 0 0 N,F 30,L,F 100,V 30,F 100,H -30,F10
   */
-
-  function processCircuit(circuitInfo) {
-    let tokens = circuitInfo.split(',');
-    for (let token of tokens) {
-      let fields = token.split(' ');
-      switch (fields[0]) {
-        case 'M':
-          moveHeader([parseInt(fields[1]), parseInt(fields[2]), parseInt(fields[3]), fields[4]]);
-          break;
-        case 'F':
-          addLinearSegment(parseInt(fields[1]));
-          break;
-        case 'H':
-          addSlopeHorizontal(parseInt(fields[1]), parseInt(fields[2]));
-          break;
-        case 'V':
-          addSlopeVertical(parseInt(fields[1]), parseInt(fields[2]));
-          break;
-        case 'L':
-          addTurnToLeft();
-          break;
-        case 'R':
-          addTurnToRight();
-          break;
-        default:
-          throw "Token not recognized: " + token;
-      }
+function processCircuit(circuitInfo) {
+  let tokens = circuitInfo.split(",");
+  for (let token of tokens) {
+    let fields = token.split(" ");
+    switch (fields[0]) {
+      case "M":
+        moveHeader([
+          parseInt(fields[1]),
+          parseInt(fields[2]),
+          parseInt(fields[3]),
+          fields[4],
+        ]);
+        break;
+      case "F":
+        addLinearSegment(parseInt(fields[1]));
+        break;
+      case "H":
+        addSlopeHorizontal(parseInt(fields[1]), parseInt(fields[2]));
+        break;
+      case "V":
+        addSlopeVertical(parseInt(fields[1]), parseInt(fields[2]));
+        break;
+      case "L":
+        addTurnToLeft();
+        break;
+      case "R":
+        addTurnToRight();
+        break;
+      default:
+        throw "Token not recognized: " + token;
     }
   }
+}
 
-  function circuit1() {
-
-    let circuit1Info = 'M -5 -60 1 E,F 10,H 15 15,F 10,L,F 10,H 15 -15,F 10,V 15 30,F 20,V 15 -30,F 10,H 15 15,F 10,L,F 10,H 15 -15,F 20,H 15 15,F 10,L,F 10,H 15 -15,F 10,V 15 30,F 20,V 15 -30,F 10,H 15 15,F 10,L,F 10,H 15 -15,F 10';
-    processCircuit(circuit1Info);
-  }
-
-  function circuit2() {
-    let circuitInfo = "M -30 0 4 E,F 30,V 10 13,L,F 7,V 6 -27,F 5,R,F 4,L,F 29,R,F 16,R,F 40,V 15 25,F 23,R,F 23,L,F 13,R,V 6 -80,F 32,H 17 -23,F 7,R,F 9,L,F 25,R,F 13,R,F 20,M -47 -6 10 E    ,F 57,M -49 -6 4 E,F 60,M -34 -8.5 4 S,V 7 -15,M -21 -8.5 4 S,V 7 -15,M -3 -8.5 4 S,V 7 -15,M 6 -8.5 4 S,V 7 -15,M -34 -8.5 10 S,V 7 -15,M -21 -8.5 10 S,V 7 -15,M -3 -8.5 10 S,V 7 -15,M 6 -8.5 10 S,V 7 -15";
-    processCircuit(circuitInfo);
-    return;
-  }
-
-  window.requestAnimationFrame(render);
-  window.addEventListener("mousemove", onMouseMove, false);
-
-  processCircuit(circuit);
-};
-
-var remove = function () {
+function remove() {
   for (var i = 0; i < elementsLoaded.length; i++) {
     scene.remove(elementsLoaded[i]);
   }
   elementsLoaded = [];
 }
 
-var onMouseMove = function (e) {
+function onMouseMove(e) {
   mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
   mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-};
+}
 
-var onWindowResize = function () {
+function onWindowResize() {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
 
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-var createSlopeXZSegment = function (x, y, z, length, angleInGrad) {
+function createSlopeXZSegment(x, y, z, length, angleInGrad) {
   var segmentLength = length;
   var angle = ((2 * Math.PI) / 360) * angleInGrad; // in radians
 
@@ -625,7 +618,7 @@ var createSlopeXZSegment = function (x, y, z, length, angleInGrad) {
   return geoSlopeMesh;
 }
 
-var createCurvedSegment = function (x, y, z, rotX, rotY, rotZ) {
+function createCurvedSegment(x, y, z, rotX, rotY, rotZ) {
   var curvedSegment2D = new THREE.Shape();
   curvedSegment2D.absarc(
     0,
@@ -661,7 +654,7 @@ var createCurvedSegment = function (x, y, z, rotX, rotY, rotZ) {
   return meshGeo;
 }
 
-var createSlopeXYSegment = function (x, y, z, length, angleInGrad) {
+function createSlopeXYSegment(x, y, z, length, angleInGrad) {
   var segmentLength = length;
   var angle = ((2 * Math.PI) / 360) * angleInGrad; // in radians
 
@@ -735,14 +728,9 @@ var createSlopeXYSegment = function (x, y, z, length, angleInGrad) {
   return geoSlopeMesh;
 }
 
-init();
-animate();
-
-var circuitHandler;
-
 function loadCircuit(circuit) {
-  let element = document.getElementsByClassName('editor')[0];
-  element.innerHTML = '';
+  let element = document.getElementsByClassName("editor")[0];
+  element.innerHTML = "";
   if (!circuit.code) return;
   remove(); // remove the circuit previously load
   for (let token of circuit.tokens) {
@@ -794,40 +782,40 @@ function removeTokenHandler() {
   circuit.tokens.splice(index, 1);
 }
 
-function changeTextTokenHandler()
-{
+function changeTextTokenHandler() {
   let mainNode = this;
   let index = getIndexInCollection(mainNode);
   let circuit = circuitHandler.getSelectedCircuit();
-  circuit.tokens[index] = this.innerText.substring(0, this.innerText.length-2).trim();
+  circuit.tokens[index] = this.innerText
+    .substring(0, this.innerText.length - 2)
+    .trim();
   console.log(`content changed: ${this.innerText}`);
 }
 
 function addCircuit(circuit) {
   let newElement = false;
   if (!circuit) {
-    circuit = new Circuit('M 0 0 0 N');
-    circuit.name = 'New circuit';
+    circuit = new Circuit("M 0 0 0 N");
+    circuit.name = "New circuit";
     circuitHandler.setCircuit(circuit);
     newElement = true;
   }
-  let element = document.getElementsByClassName('picker')[0];
+  let element = document.getElementsByClassName("picker")[0];
   let circuitBtn = document.createElement("BUTTON");
-  circuitBtn.className = 'circuit-button';
+  circuitBtn.className = "circuit-button";
   circuitBtn.addEventListener("click", selectCircuitHandler);
   circuitBtn.innerHTML = circuit.name;
   element.appendChild(circuitBtn);
   loadCircuit(circuit.code);
-  if (newElement)
-    selectCircuit(circuitBtn);
+  if (newElement) selectCircuit(circuitBtn);
 }
 
 class Circuit {
   constructor(code, isPattern = false) {
     this.code = code;
-    this.tokens = code.split(',');
+    this.tokens = code.split(",");
     this.isPattern = isPattern;
-    this.name = '';
+    this.name = "";
   }
 }
 
@@ -865,7 +853,7 @@ function getIndexInCollection(el) {
   var i = 0;
   do {
     i++;
-  } while (el = el.previousElementSibling);
+  } while ((el = el.previousElementSibling));
   return i - 1;
 }
 
@@ -897,22 +885,27 @@ function selectCircuitHandler() {
 }
 
 window.onload = function () {
-  circuitHandler = new CircuitHandler;
+  init();
+  animate();
+
+  circuitHandler = new CircuitHandler();
   // Add pattern circuits.
   // fill with the two patterns.
   let pattern1 = new Circuit(
-    'M -5 -60 1 E,F 10,H 15 15,F 10,L,F 10,H 15 -15,F 10,V 15 30,F 20,V 15 -30,F 10,H 15 15,F 10,L,F 10,H 15 -15,F 20,H 15 15,F 10,L,F 10,H 15 -15,F 10,V 15 30,F 20,V 15 -30,F 10,H 15 15,F 10,L,F 10,H 15 -15,F 10',
-    true);
-  pattern1.name = 'Example 1';
+    "M -5 -60 1 E,F 10,H 15 15,F 10,L,F 10,H 15 -15,F 10,V 15 30,F 20,V 15 -30,F 10,H 15 15,F 10,L,F 10,H 15 -15,F 20,H 15 15,F 10,L,F 10,H 15 -15,F 10,V 15 30,F 20,V 15 -30,F 10,H 15 15,F 10,L,F 10,H 15 -15,F 10",
+    true
+  );
+  pattern1.name = "Example 1";
   circuitHandler.setCircuit(pattern1);
   addCircuit(pattern1); // TODO: Remove UI interaction
 
   let pattern2 = new Circuit(
-    'M -30 0 4 E,F 30,V 10 13,L,F 7,V 6 -27,F 5,R,F 4,L,F 29,R,F 16,R,F 40,V 15 25,F 23,R,F 23,L,F 13,R,V 6 -80,F 32,H 17 -23,F 7,R,F 9,L,F 25,R,F 13,R,F 20,M -47 -6 10 E    ,F 57,M -49 -6 4 E,F 60,M -34 -8.5 4 S,V 7 -15,M -21 -8.5 4 S,V 7 -15,M -3 -8.5 4 S,V 7 -15,M 6 -8.5 4 S,V 7 -15,M -34 -8.5 10 S,V 7 -15,M -21 -8.5 10 S,V 7 -15,M -3 -8.5 10 S,V 7 -15,M 6 -8.5 10 S,V 7 -15',
-    true);
-  pattern2.name = 'Example 2';
+    "M -30 0 4 E,F 30,V 10 13,L,F 7,V 6 -27,F 5,R,F 4,L,F 29,R,F 16,R,F 40,V 15 25,F 23,R,F 23,L,F 13,R,V 6 -80,F 32,H 17 -23,F 7,R,F 9,L,F 25,R,F 13,R,F 20,M -47 -6 10 E    ,F 57,M -49 -6 4 E,F 60,M -34 -8.5 4 S,V 7 -15,M -21 -8.5 4 S,V 7 -15,M -3 -8.5 4 S,V 7 -15,M 6 -8.5 4 S,V 7 -15,M -34 -8.5 10 S,V 7 -15,M -21 -8.5 10 S,V 7 -15,M -3 -8.5 10 S,V 7 -15,M 6 -8.5 10 S,V 7 -15",
+    true
+  );
+  pattern2.name = "Example 2";
   circuitHandler.setCircuit(pattern2);
-  addCircuit(pattern2);  // TODO: Remove UI interaction
+  addCircuit(pattern2); // TODO: Remove UI interaction
   // Add active class to the current button (highlight it)
   var header = document.getElementsByClassName("picker")[0];
   var btns = header.getElementsByClassName("circuit-button");
