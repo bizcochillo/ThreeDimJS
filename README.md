@@ -36,3 +36,4 @@ I like to set the following goals:
 For localtunnel use backup server if problems: 
 - lt -h "http://serverless.social" -p PORT
 
+Try collapse side panel from https://www.w3schools.com/howto/tryit.asp?filename=tryhow_js_collapse_sidepanel

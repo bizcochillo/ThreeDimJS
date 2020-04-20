@@ -1,25 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
+  <head>
     <title>Play with ThreeJS - Conveyor Layout 3D tests</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-    <link rel="stylesheet" href="styles-experiment.css" type="text/css">
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"
+    />
+    <link rel="stylesheet" href="styles-experiment.css" type="text/css" />
     <script src="lib/app-experiment.js"></script>
-</head>
+  </head>
 
-<body>
+  <body>
+    <button class="openbtn" onclick="openNav()">☰ Toggle Sidepanel</button>
     <div>
-      <div class="circuit-options">
-        <button>r</button>
-        <button>c</button>
-        <button onclick="removeCircuit()">x</button>
-        <button onclick="addCircuit()">+</button>
+      <div id="mySidepanel" class="sidepanel">
+        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">×</a>
+        <div class="circuit-options">
+          <button>r</button>
+          <button>c</button>
+          <button onclick="removeCircuit()">x</button>
+          <button onclick="addCircuit()">+</button>
+        </div>
+        <div class="picker"></div>
+        <div class="editor"></div>
       </div>
-      <div class="picker">
-      </div>
-      <div class="editor"></div>
     </div>
-</body>
+  </body>
 </html>
