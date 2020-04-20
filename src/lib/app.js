@@ -2,13 +2,17 @@ const SEGMENT_YMAX = 5;
 const SEGMENT_ZMAX = 2;
 const CURVED_RADIUS = 7;
 
-var renderer, scene, camera;
-var headerPosition = [-30, 0, 4, "E"];
-var raycaster = new THREE.Raycaster();
-var mouse = new THREE.Vector2();
-var INTERSECTED;
-var elementsLoaded = [];
-var circuitHandler;
+let renderer,
+    scene,
+    camera,
+    controls,
+    headerPosition = [-30, 0, 4, "E"],
+    raycaster = new THREE.Raycaster(),
+    mouse = new THREE.Vector2(),
+    INTERSECTED,
+    elementsLoaded = [],
+    circuitHandler;
+
 
 //TODO: for refactoring.
 class HeadPosition {
@@ -134,7 +138,7 @@ function init() {
 
   //
 
-  var controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls = new THREE.OrbitControls(camera, renderer.domElement);
 
   //
 
@@ -442,11 +446,11 @@ function addSlopeVertical(size, angleInGrad) {
 }
 
 function addSlopeHorizontal(size, angleInGrad) {
-  var angleInRad = ((2 * Math.PI) / 360) * angleInGrad;
+  let angleInRad = ((2 * Math.PI) / 360) * angleInGrad;
 
-  x = headerPosition[0];
-  y = headerPosition[1];
-  z = headerPosition[2];
+  let x = headerPosition[0],
+      y = headerPosition[1],
+      z = headerPosition[2];
 
   addElementToScene(createSlopeXYSegment(x, y, z, size, angleInGrad));
 
