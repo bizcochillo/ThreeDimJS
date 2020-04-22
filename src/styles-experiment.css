@@ -71,9 +71,14 @@
   color: blue;
 }
 
+.parameters-text-editor{
+  width: 100px;
+  margin: 3px 0 0 10px;
+}
+
 /* select */
 .select-css {
-	display: block;
+	display: inline;
 	font-size: 10px;
 	font-family: sans-serif;
 	font-weight: 700;

@@ -51,8 +51,7 @@ function getActionFromTokenLabel(label) {
   return [actionText, actionClass, parameters];
 }
 
-function addActionToDropDownHtmlControl(drop_down, text, value)
-{
+function addActionToDropDownHtmlControl(drop_down, text, value) {
   let item = document.createElement("OPTION");
   item.textContent = text;
   item.value = value;
@@ -106,10 +105,12 @@ function createTokenContainer(token) {
   drop_down_actions.value = token[0];
   editor_div.appendChild(drop_down_actions);
   //  Textbox
-  let TEMP_input = document.createElement("INPUT");
-  TEMP_input.className = "";
-  TEMP_input.value = parameters;
-  editor_div.appendChild(TEMP_input);
+  if (token[0] !== "L" && token[0] !== "R") {
+    let TEMP_input = document.createElement("INPUT");
+    TEMP_input.className = "token-parameters-text parameters-text-editor";
+    TEMP_input.value = parameters;
+    editor_div.appendChild(TEMP_input);
+  }
   /*
 <input type = "text"
                  id = "myText"
