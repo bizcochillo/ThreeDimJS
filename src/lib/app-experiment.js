@@ -47,7 +47,6 @@ function getActionFromTokenLabel(label) {
       actionClass = "action-label-left";
       break;
   }
-
   return [actionText, actionClass, parameters];
 }
 
@@ -56,6 +55,68 @@ function addActionToDropDownHtmlControl(drop_down, text, value) {
   item.textContent = text;
   item.value = value;
   drop_down.appendChild(item);
+}
+
+function addTokenContainerHandler() {
+  let mainNode = this.parentNode.parentNode;
+  let index = getIndexInDOMCollection(mainNode);
+  let parentElement = mainNode.parentNode;
+  let token = "F 10";
+  parentElement.insertBefore(createTokenContainer(token), mainNode.nextSibling);
+  // let circuit = circuitHandler.getSelectedCircuit();
+  // circuit.tokens.splice(index + 1, 0, token);
+}
+
+function removeTokenContainerHandler() {
+  let mainNode = this.parentNode.parentNode;
+  let index = getIndexInDOMCollection(mainNode);
+  mainNode.remove();
+  // let circuit = circuitHandler.getSelectedCircuit();
+  // circuit.tokens.splice(index, 1);
+}
+
+function createDOMInputElement(value) {
+  let element = document.createElement("INPUT");
+  element.className = "token-parameters-text parameters-text-editor";
+  element.value = value;
+  return element;
+}
+
+function addControlsToTokenEditionContainer(token, div) {
+  let token_items = token.trim().split(" ");
+  let size_input, slope_input, x_input, y_input, z_input, orientation_input;
+  switch (token_items[0]) {
+    case "F":
+      size_input = createDOMInputElement(token_items[1]);
+      div.appendChild(size_input);
+      break;
+    case "M":
+      x_input = createDOMInputElement(token_items[1]);
+      div.appendChild(x_input);
+      y_input = createDOMInputElement(token_items[2]);
+      div.appendChild(y_input);
+      z_input = createDOMInputElement(token_items[3]);
+      div.appendChild(z_input);
+      // orientation_input = createDOMInputElement(token_items[4]);
+      // div.appendChild(orientation_input);
+      let select_orientation = document.createElement("SELECT");
+      addActionToDropDownHtmlControl(select_orientation, "N", "N");
+      addActionToDropDownHtmlControl(select_orientation, "S", "S");
+      addActionToDropDownHtmlControl(select_orientation, "E", "E");
+      addActionToDropDownHtmlControl(select_orientation, "W", "W");
+      select_orientation.className = "select-css";
+      select_orientation.value = token_items[4];
+      select_orientation.style.margin = "3px 0 0 10px";
+      div.appendChild(select_orientation)
+      break;
+    case "H":
+    case "V":
+      size_input = createDOMInputElement(token_items[1]);
+      div.appendChild(size_input);
+      slope_input = createDOMInputElement(token_items[2]);
+      div.appendChild(slope_input);
+      break;
+  }
 }
 
 function createTokenContainer(token) {
@@ -103,30 +164,21 @@ function createTokenContainer(token) {
   addActionToDropDownHtmlControl(drop_down_actions, "right", "R");
   drop_down_actions.className = "select-css";
   drop_down_actions.value = token[0];
+  //drop_down_actions.addEventListener("change", )
   editor_div.appendChild(drop_down_actions);
   //  Textbox
-  if (token[0] !== "L" && token[0] !== "R") {
-    let TEMP_input = document.createElement("INPUT");
-    TEMP_input.className = "token-parameters-text parameters-text-editor";
-    TEMP_input.value = parameters;
-    editor_div.appendChild(TEMP_input);
-  }
-  /*
-<input type = "text"
-                 id = "myText"
-                 value = "text here" />
-  */
+  addControlsToTokenEditionContainer(token, editor_div);
 
   //DIV options buttons
   let buttonRemove = document.createElement("BUTTON");
   buttonRemove.className = "token-panel-editor-button";
   buttonRemove.innerText = "x";
-  //buttonRemove.addEventListener("click", removeTokenHandler);
+  buttonRemove.addEventListener("click", removeTokenContainerHandler);
 
   let buttonAdd = document.createElement("BUTTON");
   buttonAdd.className = "token-panel-editor-button";
   buttonAdd.innerText = "+";
-  //buttonAdd.addEventListener("click", addTokenHandler);
+  buttonAdd.addEventListener("click", addTokenContainerHandler);
 
   buttons_div.appendChild(buttonRemove);
   buttons_div.appendChild(buttonAdd);
