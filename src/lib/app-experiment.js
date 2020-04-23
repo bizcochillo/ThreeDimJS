@@ -82,20 +82,31 @@ function createDOMInputElement(value) {
   return element;
 }
 
+function setInputDOMToNumberType(input, min, max, step) {
+  input.max = max;
+  input.min = min;
+  input.step = step;
+  input.type = "number";
+}
+
 function addControlsToTokenEditionContainer(token, div) {
   let token_items = token.trim().split(" ");
   let size_input, slope_input, x_input, y_input, z_input, orientation_input;
   switch (token_items[0]) {
     case "F":
       size_input = createDOMInputElement(token_items[1]);
+      setInputDOMToNumberType(size_input, 0, 100, 0.01);
       div.appendChild(size_input);
       break;
     case "M":
       x_input = createDOMInputElement(token_items[1]);
+      setInputDOMToNumberType(x_input, -300, 300, 0.01);
       div.appendChild(x_input);
       y_input = createDOMInputElement(token_items[2]);
+      setInputDOMToNumberType(y_input, -300, 300, 0.01);
       div.appendChild(y_input);
       z_input = createDOMInputElement(token_items[3]);
+      setInputDOMToNumberType(z_input, -300, 300, 0.01);
       div.appendChild(z_input);
       // orientation_input = createDOMInputElement(token_items[4]);
       // div.appendChild(orientation_input);
@@ -112,22 +123,24 @@ function addControlsToTokenEditionContainer(token, div) {
     case "H":
     case "V":
       size_input = createDOMInputElement(token_items[1]);
+      setInputDOMToNumberType(size_input, 0, 100, 0.01);
       div.appendChild(size_input);
       slope_input = createDOMInputElement(token_items[2]);
+      setInputDOMToNumberType(slope_input, -180, 180, 0.01);
       div.appendChild(slope_input);
       break;
   }
 }
 
-function changeDOMControlsInEditorPanel(){
+function changeDOMControlsInEditorPanel() {
   let ref_to_elements = [];
   let next_element = this.nextSibling;
   let parent = this.parentNode;
-  while (next_element){
+  while (next_element) {
     ref_to_elements.push(next_element);
     next_element = next_element.nextSibling;
   }
-  for (let i=0;i<ref_to_elements.length;i++){
+  for (let i = 0; i < ref_to_elements.length; i++) {
     parent.removeChild(ref_to_elements[i]);
   }
   addControlsToTokenEditionContainer(this.value + " 0 0 0 E", parent);
