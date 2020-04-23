@@ -119,6 +119,20 @@ function addControlsToTokenEditionContainer(token, div) {
   }
 }
 
+function changeDOMControlsInEditorPanel(){
+  let ref_to_elements = [];
+  let next_element = this.nextSibling;
+  let parent = this.parentNode;
+  while (next_element){
+    ref_to_elements.push(next_element);
+    next_element = next_element.nextSibling;
+  }
+  for (let i=0;i<ref_to_elements.length;i++){
+    parent.removeChild(ref_to_elements[i]);
+  }
+  addControlsToTokenEditionContainer(this.value + " 0 0 0 E", parent);
+}
+
 function createTokenContainer(token) {
   let main_container = document.createElement("DIV");
   main_container.className = "token-panel-item";
@@ -164,7 +178,7 @@ function createTokenContainer(token) {
   addActionToDropDownHtmlControl(drop_down_actions, "right", "R");
   drop_down_actions.className = "select-css";
   drop_down_actions.value = token[0];
-  //drop_down_actions.addEventListener("change", )
+  drop_down_actions.addEventListener("change", changeDOMControlsInEditorPanel)
   editor_div.appendChild(drop_down_actions);
   //  Textbox
   addControlsToTokenEditionContainer(token, editor_div);
