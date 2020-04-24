@@ -2,31 +2,20 @@ const SEGMENT_YMAX = 5;
 const SEGMENT_ZMAX = 2;
 const CURVED_RADIUS = 7;
 
-let renderer,
-    scene,
-    camera,
-    controls,
-    headerPosition = [-30, 0, 4, "E"],
-    raycaster = new THREE.Raycaster(),
-    mouse = new THREE.Vector2(),
-    INTERSECTED,
-    elementsLoaded = [],
-    circuitHandler;
-
-
-//TODO: for refactoring.
-class HeadPosition {
-  constructor(x, y, z, orientation) {
-    this.x = x;
-    this.y = y;
-    this.z = z;
-    this.orientation = orientation;
-  }
-}
+let _renderer,
+    _scene,
+    _camera,
+    _controls,
+    _header_position = [-30, 0, 4, "E"],
+    _raycaster = new THREE.Raycaster(),
+    _mouse = new THREE.Vector2(),
+    _intersected,
+    _elements_loaded = [],
+    _circuit_handler;
 
 function createLinearXSegment(x, y, z, length) {
-  var segmentGeo = new THREE.BoxBufferGeometry(length, 5, 2);
-  var segmentMesh = new THREE.Mesh(
+  let segmentGeo = new THREE.BoxBufferGeometry(length, 5, 2);
+  let segmentMesh = new THREE.Mesh(
     segmentGeo,
     new THREE.MeshLambertMaterial({ color: 0x0000ff })
   );
@@ -37,108 +26,79 @@ function createLinearXSegment(x, y, z, length) {
   return segmentMesh;
 };
 
-//wow! this smells!
 function createLinearYSegment(x, y, z, length) {
-  var segmentGeo = new THREE.BoxBufferGeometry(5, length, 2);
-  var segmentMesh = new THREE.Mesh(
-    segmentGeo,
+  let segment_geo = new THREE.BoxBufferGeometry(5, length, 2);
+  let segment_mesh = new THREE.Mesh(
+    segment_geo,
     new THREE.MeshLambertMaterial({ color: 0x0000ff })
   );
-  segmentMesh.position.x = x;
-  segmentMesh.position.y = y;
-  segmentMesh.position.z = z;
-  segmentMesh.Descriptor = "LinearSegment";
-  return segmentMesh;
+  segment_mesh.position.x = x;
+  segment_mesh.position.y = y;
+  segment_mesh.position.z = z;
+  segment_mesh.Descriptor = "LinearSegment";
+  return segment_mesh;
 };
 
-function init() {
-  var container = document.getElementById("container");
+function initCircuitRepresentationEngine() {
+  let container = document.getElementById("container");
 
   //
 
-  scene = new THREE.Scene();
-  scene.background = new THREE.Color(0xb0b0b0);
+  _scene = new THREE.Scene();
+  _scene.background = new THREE.Color(0xb0b0b0);
 
-  camera = new THREE.PerspectiveCamera(
+  _camera = new THREE.PerspectiveCamera(
     50,
     window.innerWidth / window.innerHeight,
     1,
     1000
   );
-  camera.position.set(0, 0, 200);
+  _camera.position.set(0, 0, 200);
 
   //
 
-  var group = new THREE.Group();
-  scene.add(group);
+  let group = new THREE.Group();
+  _scene.add(group);
 
   //
 
-  var directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
-  directionalLight.position.set(0.75, 0.75, 1.0).normalize();
-  scene.add(directionalLight);
+  let directional_light = new THREE.DirectionalLight(0xffffff, 0.6);
+  directional_light.position.set(0.75, 0.75, 1.0).normalize();
+  _scene.add(directional_light);
 
-  var ambientLight = new THREE.AmbientLight(0xcccccc, 0.2);
-  scene.add(ambientLight);
+  let ambient_light = new THREE.AmbientLight(0xcccccc, 0.2);
+  _scene.add(ambient_light);
 
   //
-  var segmentCount = 64,
+  let segment_count = 64,
     radius = 100,
-    circleGeometry = new THREE.Geometry(),
+    circle_geometry = new THREE.Geometry(),
     material = new THREE.LineBasicMaterial({ color: 0xffffff });
 
-  for (let i = 0; i <= segmentCount; i++) {
-    var theta = (i / segmentCount) * Math.PI * 2;
-    circleGeometry.vertices.push(
+  for (let i = 0; i <= segment_count; i++) {
+    let theta = (i / segment_count) * Math.PI * 2;
+    circle_geometry.vertices.push(
       new THREE.Vector3(Math.cos(theta) * radius, Math.sin(theta) * radius, 0)
     );
   }
-  scene.add(new THREE.Line(circleGeometry, material));
+  _scene.add(new THREE.Line(circle_geometry, material));
   //
 
-  var helper = new THREE.GridHelper(360, 10);
+  let helper = new THREE.GridHelper(360, 10);
   helper.rotation.x = Math.PI / 2;
   group.add(helper);
 
   // Axis
-  var axes = new THREE.AxesHelper(50);
-  scene.add(axes);
-
-  var linearSegmentX = createLinearXSegment(0, 0, 5, 50);
-
-  var linearSegmentY = createLinearYSegment(25 + 10, 25 + 10, 5, 50);
-
-  var angleSlope = 45.0;
-  var linearSlopeXZ = createSlopeXZSegment(0, 0, 0, 40, angleSlope);
-
-  var angleSlopeXY = -20.0;
-  var linearSlopeXY = createSlopeXYSegment(20, 0, 0, 20, angleSlopeXY);
-
-  var lengthSegment2 = 200;
-  var linearSegmentX2 = createLinearXSegment(
-    40 * Math.cos(((2 * Math.PI) / 360) * angleSlope) + lengthSegment2 / 2,
-    0,
-    40 * Math.sin(((2 * Math.PI) / 360) * angleSlope),
-    lengthSegment2
-  );
-
-  var curvedSegmentPos = createCurvedSegment(
-    40 * Math.cos(((2 * Math.PI) / 360) * angleSlope) - CURVED_RADIUS,
-    CURVED_RADIUS,
-    40 * Math.sin(((2 * Math.PI) / 360) * angleSlope) + 10,
-    0,
-    0,
-    (3 * Math.PI) / 2
-  );
-
-  renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setPixelRatio(window.devicePixelRatio);
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  container.appendChild(renderer.domElement);
+  let axes = new THREE.AxesHelper(50);
+  _scene.add(axes);
+  _renderer = new THREE.WebGLRenderer({ antialias: true });
+  _renderer.setPixelRatio(window.devicePixelRatio);
+  _renderer.setSize(window.innerWidth, window.innerHeight);
+  container.appendChild(_renderer.domElement);
 
   //
 
-  controls = new THREE.OrbitControls(camera, renderer.domElement);
+  _controls = new THREE.OrbitControls(_camera, _renderer.domElement);
 
   //
 
@@ -153,9 +113,9 @@ function animate() {
 
 function render() {
   // update the picking ray with the camera and mouse position
-  raycaster.setFromCamera(mouse, camera);
+  _raycaster.setFromCamera(_mouse, _camera);
   // calculate objects intersecting the picking ray
-  var intersects = raycaster.intersectObjects(scene.children);
+  var intersects = _raycaster.intersectObjects(_scene.children);
   if (intersects.length > 0) {
     var i;
     var minDistance = Number.MAX_SAFE_INTEGER;
@@ -169,49 +129,48 @@ function render() {
         minDistance = intersects[i].distance;
       }
     }
-    if (INTERSECTED) INTERSECTED.material.color.setHex(INTERSECTED.currentHex);
+    if (_intersected) _intersected.material.color.setHex(_intersected.currentHex);
     // store reference to closest object as current intersection object
-    INTERSECTED = minIntersectedObject;
+    _intersected = minIntersectedObject;
     // store color of closest object (for later restoration)
-    INTERSECTED.currentHex = INTERSECTED.material.color.getHex();
+    _intersected.currentHex = _intersected.material.color.getHex();
     // set a new color for closest object
-    INTERSECTED.material.color.setHex(0xffff00);
+    _intersected.material.color.setHex(0xffff00);
   } // there are no intersections
   else {
     // restore previous intersection object (if it exists) to its original color
-    if (INTERSECTED) INTERSECTED.material.color.setHex(INTERSECTED.currentHex);
+    if (_intersected) _intersected.material.color.setHex(_intersected.currentHex);
     // remove previous intersection object reference
     //     by setting current intersection object to "nothing"
-    INTERSECTED = null;
+    _intersected = null;
   }
 
-  renderer.render(scene, camera);
+  _renderer.render(_scene, _camera);
 };
 
 function addElementToScene(element) {
-  elementsLoaded.push(element);
-  scene.add(element);
+  _elements_loaded.push(element);
+  _scene.add(element);
 }
 
 function addLinearXSegment(size, direction) {
-  x = headerPosition[0];
-  y = headerPosition[1];
-  z = headerPosition[2];
+  x = _header_position[0];
+  y = _header_position[1];
+  z = _header_position[2];
   var modif = direction === "E" ? 1 : -1;
 
   addElementToScene(createLinearXSegment(x + (modif * size) / 2, y, z, size));
 
   // calculate new position
-  headerPosition[0] = headerPosition[0] + modif * size;
+  _header_position[0] = _header_position[0] + modif * size;
 }
 
-//This smells. I'm not proud of it.
 function addLinearYSegment(size, direction) {
-  x = headerPosition[0];
-  y = headerPosition[1];
-  z = headerPosition[2];
+  x = _header_position[0];
+  y = _header_position[1];
+  z = _header_position[2];
   var modif = direction === "N" ? 1 : -1;
-  headerPosition[1] = headerPosition[1] + modif * size;
+  _header_position[1] = _header_position[1] + modif * size;
   var elementToAdd = createLinearYSegment(x, y + (modif * size) / 2, z, size);
   addElementToScene(elementToAdd);
 }
@@ -219,12 +178,12 @@ function addLinearYSegment(size, direction) {
 function addSlopeXZSegment(size, angle) {
   var angleInRad = ((2 * Math.PI) / 360) * angle;
 
-  var x = headerPosition[0];
-  var y = headerPosition[1];
-  var z = headerPosition[2];
+  var x = _header_position[0];
+  var y = _header_position[1];
+  var z = _header_position[2];
 
-  headerPosition[0] = headerPosition[0] + size * Math.cos(angleInRad);
-  headerPosition[2] = headerPosition[2] + size * Math.sin(angleInRad);
+  _header_position[0] = _header_position[0] + size * Math.cos(angleInRad);
+  _header_position[2] = _header_position[2] + size * Math.sin(angleInRad);
   addElementToScene(createSlopeXZSegment(x, y, z, size, angle));
 }
 
@@ -233,26 +192,26 @@ function addSlopeXYSegment(size, angle) {
   var x = 0,
     y = 0,
     z = 0;
-  if (headerPosition) {
-    x = headerPosition[0];
-    y = headerPosition[1];
-    z = headerPosition[2];
+  if (_header_position) {
+    x = _header_position[0];
+    y = _header_position[1];
+    z = _header_position[2];
   } else {
-    headerPosition = [0, 0, 0];
+    _header_position = [0, 0, 0];
   }
-  headerPosition[0] = headerPosition[0] + size * Math.cos(angleInRad);
-  headerPosition[1] = headerPosition[2] + size * Math.sin(angleInRad);
+  _header_position[0] = _header_position[0] + size * Math.cos(angleInRad);
+  _header_position[1] = _header_position[2] + size * Math.sin(angleInRad);
   addElementToScene(createSlopeXYSegment(x, y, z, size, angle));
 }
 
 function addCurvedSESegment(nextDirection) {
-  var x = headerPosition[0];
-  var y = headerPosition[1];
-  var z = headerPosition[2];
+  var x = _header_position[0];
+  var y = _header_position[1];
+  var z = _header_position[2];
 
   var modif = nextDirection === "W" ? -1 : 1;
-  headerPosition[0] = headerPosition[0] + modif * CURVED_RADIUS;
-  headerPosition[1] = headerPosition[1] + modif * CURVED_RADIUS;
+  _header_position[0] = _header_position[0] + modif * CURVED_RADIUS;
+  _header_position[1] = _header_position[1] + modif * CURVED_RADIUS;
   var curvedSegmentSE;
   if (nextDirection === "N")
     curvedSegmentSE = createCurvedSegment(
@@ -277,14 +236,14 @@ function addCurvedSESegment(nextDirection) {
 }
 
 function addCurvedSWSegment(nextDirection) {
-  var x = headerPosition[0],
-    y = headerPosition[1],
-    z = headerPosition[2];
+  var x = _header_position[0],
+    y = _header_position[1],
+    z = _header_position[2];
 
   var modifX = nextDirection === "E" ? 1 : -1;
   var modifY = nextDirection === "E" ? -1 : 1;
-  headerPosition[0] = headerPosition[0] + modifX * CURVED_RADIUS;
-  headerPosition[1] = headerPosition[1] + modifY * CURVED_RADIUS;
+  _header_position[0] = _header_position[0] + modifX * CURVED_RADIUS;
+  _header_position[1] = _header_position[1] + modifY * CURVED_RADIUS;
 
   var curvedSegment3;
   if (nextDirection === "E")
@@ -309,14 +268,14 @@ function addCurvedSWSegment(nextDirection) {
 }
 
 function addCurvedNESegment(nextDirection) {
-  x = headerPosition[0];
-  y = headerPosition[1];
-  z = headerPosition[2];
+  x = _header_position[0];
+  y = _header_position[1];
+  z = _header_position[2];
 
   var modifX = nextDirection === "W" ? -1 : 1;
   var modifY = nextDirection === "S" ? -1 : 1;
-  headerPosition[0] = headerPosition[0] + modifX * CURVED_RADIUS;
-  headerPosition[1] = headerPosition[1] + modifY * CURVED_RADIUS;
+  _header_position[0] = _header_position[0] + modifX * CURVED_RADIUS;
+  _header_position[1] = _header_position[1] + modifY * CURVED_RADIUS;
   var curvedSegment;
   if (nextDirection === "W")
     curvedSegment = createCurvedSegment(
@@ -340,13 +299,13 @@ function addCurvedNESegment(nextDirection) {
 }
 
 function addCurvedNWSegment(nextDirection) {
-  x = headerPosition[0];
-  y = headerPosition[1];
-  z = headerPosition[2];
+  x = _header_position[0];
+  y = _header_position[1];
+  z = _header_position[2];
 
   var modif = nextDirection === "S" ? -1 : 1;
-  headerPosition[0] = headerPosition[0] + modif * CURVED_RADIUS;
-  headerPosition[1] = headerPosition[1] + modif * CURVED_RADIUS;
+  _header_position[0] = _header_position[0] + modif * CURVED_RADIUS;
+  _header_position[1] = _header_position[1] + modif * CURVED_RADIUS;
   if (nextDirection === "S")
     addElementToScene(
       createCurvedSegment(
@@ -372,7 +331,7 @@ function addCurvedNWSegment(nextDirection) {
 }
 
 function addLinearSegment(size) {
-  var direction = headerPosition[3];
+  var direction = _header_position[3];
   if (direction === "E" || direction === "W")
     addLinearXSegment(size, direction);
   else addLinearYSegment(size, direction);
@@ -393,36 +352,36 @@ function TurnToRight(position) {
 }
 
 function addTurnToLeft() {
-  var startDirection = headerPosition[3];
+  var startDirection = _header_position[3];
   var nextDirection = TurnToLeft(startDirection);
   if (startDirection === "N") addCurvedNESegment(nextDirection);
   if (startDirection === "E") addCurvedSESegment(nextDirection);
   if (startDirection === "S") addCurvedSWSegment(nextDirection);
   if (startDirection === "W") addCurvedNWSegment(nextDirection);
-  headerPosition[3] = nextDirection;
+  _header_position[3] = nextDirection;
 }
 
 function addTurnToRight() {
-  var startDirection = headerPosition[3];
+  var startDirection = _header_position[3];
   var nextDirection = TurnToRight(startDirection);
   if (startDirection === "N") addCurvedNWSegment(nextDirection);
   if (startDirection === "E") addCurvedNESegment(nextDirection);
   if (startDirection === "S") addCurvedSESegment(nextDirection);
   if (startDirection === "W") addCurvedSWSegment(nextDirection);
-  headerPosition[3] = nextDirection;
+  _header_position[3] = nextDirection;
 }
 
 function addSlopeVertical(size, angleInGrad) {
   var angleInRad = ((2 * Math.PI) / 360) * angleInGrad;
 
-  x = headerPosition[0];
-  y = headerPosition[1];
-  z = headerPosition[2];
+  x = _header_position[0];
+  y = _header_position[1];
+  z = _header_position[2];
 
   addElementToScene(createSlopeXZSegment(x, y, z, size, angleInGrad));
 
   var deltaX, deltaY, deltaZ;
-  var direction = headerPosition[3];
+  var direction = _header_position[3];
   if (direction === "N") {
     deltaX = 0;
     deltaY = size * Math.cos(angleInRad);
@@ -440,22 +399,22 @@ function addSlopeVertical(size, angleInGrad) {
     deltaY = 0;
   }
   deltaZ = size * Math.sin(angleInRad);
-  headerPosition[0] = headerPosition[0] + deltaX;
-  headerPosition[1] = headerPosition[1] + deltaY;
-  headerPosition[2] = headerPosition[2] + deltaZ;
+  _header_position[0] = _header_position[0] + deltaX;
+  _header_position[1] = _header_position[1] + deltaY;
+  _header_position[2] = _header_position[2] + deltaZ;
 }
 
 function addSlopeHorizontal(size, angleInGrad) {
   let angleInRad = ((2 * Math.PI) / 360) * angleInGrad;
 
-  let x = headerPosition[0],
-      y = headerPosition[1],
-      z = headerPosition[2];
+  let x = _header_position[0],
+      y = _header_position[1],
+      z = _header_position[2];
 
   addElementToScene(createSlopeXYSegment(x, y, z, size, angleInGrad));
 
   var deltaX, deltaY, deltaZ;
-  var direction = headerPosition[3];
+  var direction = _header_position[3];
   if (direction === "N") {
     deltaX = -size * Math.sin(angleInRad);
     deltaY = size * Math.cos(angleInRad);
@@ -473,13 +432,13 @@ function addSlopeHorizontal(size, angleInGrad) {
     deltaY = -size * Math.sin(angleInRad);
   }
   deltaZ = 0;
-  headerPosition[0] = headerPosition[0] + deltaX;
-  headerPosition[1] = headerPosition[1] + deltaY;
-  headerPosition[2] = headerPosition[2] + deltaZ;
+  _header_position[0] = _header_position[0] + deltaX;
+  _header_position[1] = _header_position[1] + deltaY;
+  _header_position[2] = _header_position[2] + deltaZ;
 }
 
 function moveHeader(position) {
-  headerPosition = position;
+  _header_position = position;
 }
 
 function load(circuit) {
@@ -532,22 +491,22 @@ function processCircuit(circuitInfo) {
 }
 
 function removeCircuitFromScene() {
-  for (var i = 0; i < elementsLoaded.length; i++) {
-    scene.remove(elementsLoaded[i]);
+  for (var i = 0; i < _elements_loaded.length; i++) {
+    _scene.remove(_elements_loaded[i]);
   }
-  elementsLoaded = [];
+  _elements_loaded = [];
 }
 
 function onMouseMove(e) {
-  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+  _mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  _mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 }
 
 function onWindowResize() {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
+  _camera.aspect = window.innerWidth / window.innerHeight;
+  _camera.updateProjectionMatrix();
 
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  _renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
 function createSlopeXZSegment(x, y, z, length, angleInGrad) {
@@ -608,7 +567,7 @@ function createSlopeXZSegment(x, y, z, length, angleInGrad) {
   geoSlopeMesh.position.z = z;
   geoSlopeMesh.Descriptor = "LinearSlopeXZSegment";
 
-  var direction = headerPosition[3];
+  var direction = _header_position[3];
   if (direction === "N") {
     geoSlopeMesh.rotation.set(0, 0, Math.PI / 2);
   }
@@ -718,7 +677,7 @@ function createSlopeXYSegment(x, y, z, length, angleInGrad) {
   geoSlopeMesh.position.z = z;
   geoSlopeMesh.Descriptor = "LinearSlopeXYSegment";
 
-  var direction = headerPosition[3];
+  var direction = _header_position[3];
   if (direction === "N") {
     geoSlopeMesh.rotation.set(0, 0, Math.PI / 2);
   }
@@ -774,7 +733,7 @@ function addTokenHandler() {
   let parentElement = mainNode.parentNode;
   let token = "F 0";
   parentElement.insertBefore(createTokenContainer(token), mainNode.nextSibling);
-  let circuit = circuitHandler.getSelectedCircuit();
+  let circuit = _circuit_handler.getSelectedCircuit();
   circuit.tokens.splice(index + 1, 0, token);
 }
 
@@ -782,14 +741,14 @@ function removeTokenHandler() {
   let mainNode = this.parentNode.parentNode;
   let index = getIndexInCollection(mainNode);
   mainNode.remove();
-  let circuit = circuitHandler.getSelectedCircuit();
+  let circuit = _circuit_handler.getSelectedCircuit();
   circuit.tokens.splice(index, 1);
 }
 
 function changeTextTokenHandler() {
   let mainNode = this;
   let index = getIndexInCollection(mainNode);
-  let circuit = circuitHandler.getSelectedCircuit();
+  let circuit = _circuit_handler.getSelectedCircuit();
   circuit.tokens[index] = this.innerText
     .substring(0, this.innerText.length - 2)
     .trim();
@@ -797,12 +756,12 @@ function changeTextTokenHandler() {
 }
 
 function addCircuit(circuit) {
-  let newElement = false;
+  let new_element = false;
   if (!circuit) {
     circuit = new Circuit("M 0 0 0 N");
     circuit.name = "New circuit";
-    circuitHandler.setCircuit(circuit);
-    newElement = true;
+    _circuit_handler.setCircuit(circuit);
+    new_element = true;
   }
   let element = document.getElementsByClassName("picker")[0];
   let circuitBtn = document.createElement("BUTTON");
@@ -811,7 +770,7 @@ function addCircuit(circuit) {
   circuitBtn.innerHTML = circuit.name;
   element.appendChild(circuitBtn);
   loadCircuit(circuit.code);
-  if (newElement) selectCircuit(circuitBtn);
+  if (new_element) selectCircuit(circuitBtn);
 }
 
 class Circuit {
@@ -851,7 +810,6 @@ class CircuitHandler {
   }
 }
 
-//TODO: Replace better by a jQuery call.
 function getIndexInCollection(el) {
   if (!el) return -1;
   var i = 0;
@@ -866,22 +824,22 @@ function selectCircuit(element) {
   if (current.length > 0)
     current[0].className = current[0].className.replace(" active", "");
   element.className += " active";
-  let circuitIdx = getIndexInCollection(element); //TODO: implement with jQuery
-  loadCircuit(circuitHandler.getCircuit(circuitIdx));
+  let circuit_idx = getIndexInCollection(element); //TODO: implement with jQuery
+  loadCircuit(_circuit_handler.getCircuit(circuit_idx));
 }
 
 function removeCircuit() {
   let current = document.getElementsByClassName("active");
   if (current.length === 0) return;
-  let circuitIdx = getIndexInCollection(current[0]);
+  let circuit_idx = getIndexInCollection(current[0]);
   //update UI
-  let currentElement = current[0];
-  currentElement.parentNode.removeChild(currentElement);
-  circuitHandler.removeCircuit(circuitIdx);
-  let newIndex = Math.max(circuitIdx - 1, 0);
+  let current_element = current[0];
+  current_element.parentNode.removeChild(current_element);
+  _circuit_handler.removeCircuit(circuit_idx);
+  let new_index = Math.max(circuit_idx - 1, 0);
   let elements = document.getElementsByClassName("circuit-button");
-  elements[newIndex].className += " active";
-  loadCircuit(circuitHandler.getCircuit(newIndex));
+  elements[new_index].className += " active";
+  loadCircuit(_circuit_handler.getCircuit(new_index));
 }
 
 function selectCircuitHandler() {
@@ -889,10 +847,10 @@ function selectCircuitHandler() {
 }
 
 window.onload = function () {
-  init();
+  initCircuitRepresentationEngine();
   animate();
 
-  circuitHandler = new CircuitHandler();
+  _circuit_handler = new CircuitHandler();
   // Add pattern circuits.
   // fill with the two patterns.
   let pattern1 = new Circuit(
@@ -900,7 +858,7 @@ window.onload = function () {
     true
   );
   pattern1.name = "Example 1";
-  circuitHandler.setCircuit(pattern1);
+  _circuit_handler.setCircuit(pattern1);
   addCircuit(pattern1); // TODO: Remove UI interaction
 
   let pattern2 = new Circuit(
@@ -908,20 +866,21 @@ window.onload = function () {
     true
   );
   pattern2.name = "Example 2";
-  circuitHandler.setCircuit(pattern2);
+  _circuit_handler.setCircuit(pattern2);
   addCircuit(pattern2); // TODO: Remove UI interaction
   // Add active class to the current button (highlight it)
-  var header = document.getElementsByClassName("picker")[0];
-  var btns = header.getElementsByClassName("circuit-button");
-  for (var i = 0; i < btns.length; i++) {
-    btns[i].addEventListener("click", selectCircuitHandler);
+  let picker_control = document.getElementsByClassName("picker")[0];
+  let picker_control_buttons = picker_control.getElementsByClassName("circuit-button");
+  for (let i = 0; i < picker_control_buttons.length; i++) {
+    picker_control_buttons[i].addEventListener("click", selectCircuitHandler);
   }
 };
 
-function openNav() {
-  document.getElementById("mySidepanel").style.width = "400px";
+// functions to open/close side panel
+function openSidePanel() {
+  document.getElementById("circuitPickerSidePanel").style.width = "400px";
 }
 
-function closeNav() {
-  document.getElementById("mySidepanel").style.width = "0";
+function closeSidePanel() {
+  document.getElementById("circuitPickerSidePanel").style.width = "0";
 }

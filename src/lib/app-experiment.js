@@ -1,4 +1,7 @@
-let _token_index_DOM_in_edition = -1;
+const ESC_KEYCODE = 27;
+const INTRO_KEYCODE = 13;
+
+let _token_index_in_edition_DOM = -1;
 
 function getTokenInEditionDivByIndex(index) {
   let controlsEdition = document.getElementsByClassName("token-panel-editor");
@@ -17,9 +20,9 @@ function getIndexInDOMCollection(el) {
 
 function showTokenEdition() {
   // disable last selected token.
-  if (_token_index_DOM_in_edition !== -1) {
+  if (_token_index_in_edition_DOM !== -1) {
     let panel_edition_div = getTokenInEditionDivByIndex(
-      _token_index_DOM_in_edition
+      _token_index_in_edition_DOM
     );
     let parent_last_panel_edition = panel_edition_div.parentNode;
     let last_panel_presentation = parent_last_panel_edition.getElementsByClassName(
@@ -33,30 +36,39 @@ function showTokenEdition() {
   let panel_edition = parent.getElementsByClassName("token-panel-editor")[0];
   panel_edition.style.display = "block";
   panel_presentation.style.display = "none";
-
-  _token_index_DOM_in_edition = getIndexInDOMCollection(parent);
+  panel_presentation.focus();
+  _token_index_in_edition_DOM = getIndexInDOMCollection(parent);
 }
 
 function getActionFromTokenLabel(label) {
   let action_char = label.trim()[0];
-  let action_text, action_class, parameters;
-  parameters = label.trim().substring(1);
+  let action_text, action_class, parameters_items, parameters = [];
+  parameters_items = label.substring(1).trim().split(' ');
   switch (action_char) {
     case "M":
       action_text = "move";
       action_class = "action-label-move";
+      parameters.push({ label: "x", value: parameters_items[0] });
+      parameters.push({ label: "y", value: parameters_items[1] });
+      parameters.push({ label: "z", value: parameters_items[2] });
+      parameters.push({ label: "direction", value: parameters_items[3] });
       break;
     case "F":
       action_text = "forward";
       action_class = "action-label-forward";
+      parameters.push({ label: "length", value: parameters_items[0] });
       break;
     case "V":
       action_text = "vertical";
       action_class = "action-label-vertical";
+      parameters.push({ label: "length", value: parameters_items[0] });
+      parameters.push({ label: "degrees", value: parameters_items[1] });
       break;
     case "H":
       action_text = "horizontal";
       action_class = "action-label-horizontal";
+      parameters.push({ label: "length", value: parameters_items[0] });
+      parameters.push({ label: "degrees", value: parameters_items[1] });
       break;
     case "R":
       action_text = "right";
@@ -116,29 +128,38 @@ function getTokenFromEditionPanel(div) {
 }
 
 function validateTokenEdition(event) {
-  if (event.keyCode === 13) {
-    let panel_edition_div = getTokenInEditionDivByIndex(
-      _token_index_DOM_in_edition
-    );
-    let parent_last_panel_edition = panel_edition_div.parentNode;
-    let last_panel_presentation = parent_last_panel_edition.getElementsByClassName(
-      "token-panel-presentation"
-    )[0];
-    //get edited token from the edition panel
-    let new_token = getTokenFromEditionPanel(panel_edition_div);
-    //remove all elements from presentation panel.
-    while (last_panel_presentation.lastElementChild) {
-      last_panel_presentation.removeChild(
-        last_panel_presentation.lastElementChild
-      );
-    }
-    //update panel presentation
-    updatePresentationDiv(last_panel_presentation, new_token);
-    //hide edition panel and show presentation panel.
-    last_panel_presentation.style.display = "block";
-    panel_edition_div.style.display = "none";
-    _token_index_DOM_in_edition = -1;
+  event.stopPropagation();
+  // Only INTRO(13) and ESC(27) keys allowed
+  if (event.keyCode !== INTRO_KEYCODE && event.keyCode !== ESC_KEYCODE)
+    return;
+  let panel_edition_div = getTokenInEditionDivByIndex(
+    _token_index_in_edition_DOM
+  );
+  let parent_last_panel_edition = panel_edition_div.parentNode;
+  let last_panel_presentation = parent_last_panel_edition.getElementsByClassName(
+    "token-panel-presentation"
+  )[0];
+  switch (event.keyCode) {
+    case INTRO_KEYCODE:
+      //get edited token from the edition panel
+      let new_token = getTokenFromEditionPanel(panel_edition_div);
+      //remove all elements from presentation panel.
+      while (last_panel_presentation.lastElementChild) {
+        last_panel_presentation.removeChild(
+          last_panel_presentation.lastElementChild
+        );
+      }
+      //update panel presentation
+      updatePresentationDiv(last_panel_presentation, new_token);
+      //hide edition panel and show presentation panel.
+      break;
+    case ESC_KEYCODE: //ESC
+      break;
   }
+  last_panel_presentation.style.display = "block";
+  panel_edition_div.style.display = "none";
+  _token_index_in_edition_DOM = -1;
+
 }
 
 function setInputDOMToNumberType(input, min, max, step) {
@@ -207,6 +228,23 @@ function changeDOMControlsInEditorPanel() {
   addControlsToTokenEditionContainer(this.value + " 0 0 0 E", parent);
 }
 
+//  parameters span (x, y, z, length, degrees, direction)
+function addParametersToPresentationDivDOM(div, params) {
+  for (let item of params) {
+    let title_span = document.createElement("SPAN");
+    let title_span_text = document.createTextNode(`${item.label}: `);
+    title_span.className = "token-parameters-label";
+    title_span.appendChild(title_span_text);
+    div.appendChild(title_span);
+
+    let value_span = document.createElement("SPAN");
+    let value_span_text = document.createTextNode(item.value);
+    value_span.className = "token-parameters-value";
+    value_span.appendChild(value_span_text);
+    div.appendChild(value_span);
+  }
+}
+
 function updatePresentationDiv(div, token) {
   //  action span (left, right, forward, move, horizontal, vertical)
   let action_span = document.createElement("SPAN");
@@ -215,12 +253,7 @@ function updatePresentationDiv(div, token) {
   action_span.appendChild(action_span_text);
   action_span.className = `token-action-label ${action_class}`;
   div.appendChild(action_span);
-  //  parameters span (x, y, z, length, degrees, direction)
-  let parameters_span = document.createElement("SPAN");
-  let parameters_span_text = document.createTextNode(parameters);
-  parameters_span.className = "token-parameters-text";
-  parameters_span.appendChild(parameters_span_text);
-  div.appendChild(parameters_span);
+  addParametersToPresentationDivDOM(div, parameters);
   div.title = token;
 }
 
@@ -228,7 +261,6 @@ function createTokenContainer(token) {
   let main_container = document.createElement("DIV");
   main_container.className = "token-panel-item";
 
-  //container.addEventListener("input", changeTextTokenHandler);
   //DIV presentation
   let presentation_div = document.createElement("DIV");
   presentation_div.className = "token-panel-presentation";
@@ -246,6 +278,7 @@ function createTokenContainer(token) {
 
   //DIV edition
   editor_div.style.display = "none";
+  editor_div.tabIndex = "0";
   //  Select option.
   let select_actions = document.createElement("SELECT");
   addActionToDropDownHtmlControl(select_actions, "move", "M");
@@ -261,7 +294,8 @@ function createTokenContainer(token) {
   editor_div.appendChild(select_actions);
   //  Textbox
   addControlsToTokenEditionContainer(token, editor_div);
-  editor_div.focus();
+  editor_div.addEventListener("keyup", validateTokenEdition);
+  //editor_div.focus();
 
   //DIV options buttons
   let button_remove = document.createElement("BUTTON");

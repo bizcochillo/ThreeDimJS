@@ -64,9 +64,15 @@
   background-color: blue;
   border-color: darkblue;
 }
-.token-parameters-text{
-  font-family: 'Courier New', Courier, monospace;
+.token-parameters-label{
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
   font-size: 9pt;
+  color: blue;
+  margin-left: 15px;
+}
+.token-parameters-value{
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 10pt;
   font-weight: bold;
   color: blue;
 }
