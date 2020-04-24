@@ -531,7 +531,7 @@ function processCircuit(circuitInfo) {
   }
 }
 
-function remove() {
+function removeCircuitFromScene() {
   for (var i = 0; i < elementsLoaded.length; i++) {
     scene.remove(elementsLoaded[i]);
   }
@@ -736,7 +736,7 @@ function loadCircuit(circuit) {
   let element = document.getElementsByClassName("editor")[0];
   element.innerHTML = "";
   if (!circuit.code) return;
-  remove(); // remove the circuit previously load
+  removeCircuitFromScene(); // remove the circuit previously load
   for (let token of circuit.tokens) {
     let container = createTokenContainer(token);
     element.appendChild(container);

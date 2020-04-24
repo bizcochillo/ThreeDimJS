@@ -1,3 +1,12 @@
+let _token_index_DOM_in_edition = -1;
+
+function getTokenInEditionDivByIndex(index)
+{
+  let controlsEdition = document.getElementsByClassName("token-panel-editor");
+  if (index!==-1 && controlsEdition.length > index)
+    return controlsEdition[index];
+}
+
 function getIndexInDOMCollection(el) {
   if (!el) return -1;
   var i = 0;
@@ -8,13 +17,23 @@ function getIndexInDOMCollection(el) {
 }
 
 function showTokenEdition() {
+  // disable last selected token.
+  if (_token_index_DOM_in_edition !==-1)
+  {
+    let panel_edition_div = getTokenInEditionDivByIndex(_token_index_DOM_in_edition);
+    let parent_last_panel_edition = panel_edition_div.parentNode;
+    let last_panel_presentation = parent_last_panel_edition.getElementsByClassName("token-panel-presentation")[0];
+    last_panel_presentation.style.display = "block";
+    panel_edition_div.style.display = "none";
+
+  }
   let panelPresentation = this;
   let parent = panelPresentation.parentNode;
   let panelEdition = parent.getElementsByClassName("token-panel-editor")[0];
   panelEdition.style.display = "block";
   panelPresentation.style.display = "none";
 
-  var index = getIndexInDOMCollection(parent);
+  _token_index_DOM_in_edition = getIndexInDOMCollection(parent);
 }
 
 function getActionFromTokenLabel(label) {
@@ -182,6 +201,7 @@ function createTokenContainer(token) {
   editor_div.appendChild(drop_down_actions);
   //  Textbox
   addControlsToTokenEditionContainer(token, editor_div);
+  editor_div.focus();
 
   //DIV options buttons
   let buttonRemove = document.createElement("BUTTON");
