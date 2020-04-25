@@ -1,42 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+
+<head>
     <title>Play with ThreeJS - Conveyor Layout 3D tests</title>
     <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"
-    />
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
     <link rel="stylesheet" href="styles.css" type="text/css" />
     <script src="lib/three.js"></script>
     <script src="lib/OrbitControls.js"></script>
     <script src="lib/stats.min.js"></script>
-  </head>
+</head>
 
-  <body>
+<body>
     <div>
-      <div id="bar">
-        <button class="openbtn" onclick="openSidePanel()">☰</button>
-        <span class="title">Abelardo Palma - Playing with Three.JS</span>
+        <div id="bar">
+            <button class="openbtn" onclick="openSidePanel()">☰</button>
+            <span class="title">Abelardo Palma - Playing with Three.JS</span>
 
-      </div>
-      <div id="container"></div>
-      <div class="circuit_menu">
-        <div>
-          <div id="circuitPickerSidePanel" class="sidepanel">
-            <a href="javascript:void(0)" class="closebtn" onclick="closeSidePanel()">×</a>
-            <div class="circuit-options">
-              <button>r</button>
-              <button>c</button>
-              <button onclick="removeCircuit()">x</button>
-              <button onclick="addCircuit()">+</button>
-            </div>
-            <div class="picker"></div>
-            <div class="token-panel"></div>
-          </div>
         </div>
-      </div>
-      <script src="lib/app.js"></script>
+        <div id="container"></div>
+        <div class="circuit_menu">
+            <div>
+                <div id="circuitPickerSidePanel" class="sidepanel">
+                    <a href="javascript:void(0)" class="closebtn" onclick="closeSidePanel()">×</a>
+                    <div class="circuit-options">
+                        <button>r</button>
+                        <button>c</button>
+                        <button onclick="removeCircuit()">x</button>
+                        <button onclick="addNewCircuit()">+</button>
+                    </div>
+                    <div class="picker"></div>
+                    <div class="token-panel"></div>
+                </div>
+            </div>
+        </div>
+        <script src="lib/app.js"></script>
     </div>
-  </body>
+</body>
+
 </html>
