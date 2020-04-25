@@ -157,7 +157,7 @@ a {
   position: absolute;
   top: 250px;
   bottom: 20px;
-  left: 50px;
+  right: 20px;
   width: 400px;
   border: 3px solid #00ad21;
   overflow-y: auto;

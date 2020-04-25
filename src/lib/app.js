@@ -7,27 +7,27 @@ const INTRO_KEYCODE = 13;
 let _token_index_in_edition_DOM = -1;
 
 let _renderer,
-    _scene,
-    _camera,
-    _controls,
-    _header_position = [-30, 0, 4, "E"],
-    _raycaster = new THREE.Raycaster(),
-    _mouse = new THREE.Vector2(),
-    _intersected,
-    _elements_loaded = [],
-    _circuit_handler;
+  _scene,
+  _camera,
+  _controls,
+  _header_position = [-30, 0, 4, "E"],
+  _raycaster = new THREE.Raycaster(),
+  _mouse = new THREE.Vector2(),
+  _intersected,
+  _elements_loaded = [],
+  _circuits_collection;
 
 function createLinearXSegment(x, y, z, length) {
-  let segmentGeo = new THREE.BoxBufferGeometry(length, 5, 2);
-  let segmentMesh = new THREE.Mesh(
-    segmentGeo,
+  let segment_geo = new THREE.BoxBufferGeometry(length, 5, 2);
+  let segment_mesh = new THREE.Mesh(
+    segment_geo,
     new THREE.MeshLambertMaterial({ color: 0x0000ff })
   );
-  segmentMesh.position.x = x;
-  segmentMesh.position.y = y;
-  segmentMesh.position.z = z;
-  segmentMesh.Descriptor = "LinearSegment";
-  return segmentMesh;
+  segment_mesh.position.x = x;
+  segment_mesh.position.y = y;
+  segment_mesh.position.z = z;
+  segment_mesh.Descriptor = "LinearSegment";
+  return segment_mesh;
 };
 
 function createLinearYSegment(x, y, z, length) {
@@ -43,7 +43,7 @@ function createLinearYSegment(x, y, z, length) {
   return segment_mesh;
 };
 
-function initCircuitRepresentationEngine() {
+function initCircuitViewEngine() {
   let container = document.getElementById("container");
 
   //
@@ -109,8 +109,8 @@ function initCircuitRepresentationEngine() {
   window.addEventListener("resize", onWindowResize, false);
 };
 
-function animate() {
-  requestAnimationFrame(animate);
+function animateCircuitViewEngine() {
+  requestAnimationFrame(animateCircuitViewEngine);
 
   render();
 };
@@ -122,15 +122,15 @@ function render() {
   var intersects = _raycaster.intersectObjects(_scene.children);
   if (intersects.length > 0) {
     var i;
-    var minDistance = Number.MAX_SAFE_INTEGER;
+    var min_distance = Number.MAX_SAFE_INTEGER;
     var minIntersectedObject = null;
     for (i = 0; i < intersects.length; i++) {
       if (
         minIntersectedObject == null ||
-        minDistance > intersects[i].distance
+        min_distance > intersects[i].distance
       ) {
         minIntersectedObject = intersects[i].object;
-        minDistance = intersects[i].distance;
+        min_distance = intersects[i].distance;
       }
     }
     if (_intersected) _intersected.material.color.setHex(_intersected.currentHex);
@@ -208,16 +208,16 @@ function addSlopeXYSegment(size, angle) {
   addElementToScene(createSlopeXYSegment(x, y, z, size, angle));
 }
 
-function addCurvedSESegment(nextDirection) {
-  var x = _header_position[0];
-  var y = _header_position[1];
-  var z = _header_position[2];
+function addCurvedSESegment(next_direction) {
+  let x = _header_position[0];
+  let y = _header_position[1];
+  let z = _header_position[2];
 
-  var modif = nextDirection === "W" ? -1 : 1;
+  let modif = next_direction === "W" ? -1 : 1;
   _header_position[0] = _header_position[0] + modif * CURVED_RADIUS;
   _header_position[1] = _header_position[1] + modif * CURVED_RADIUS;
-  var curvedSegmentSE;
-  if (nextDirection === "N")
+  let curvedSegmentSE;
+  if (next_direction === "N")
     curvedSegmentSE = createCurvedSegment(
       x - CURVED_RADIUS,
       y + CURVED_RADIUS,
@@ -240,7 +240,7 @@ function addCurvedSESegment(nextDirection) {
 }
 
 function addCurvedSWSegment(nextDirection) {
-  var x = _header_position[0],
+  let x = _header_position[0],
     y = _header_position[1],
     z = _header_position[2];
 
@@ -412,8 +412,8 @@ function addSlopeHorizontal(size, angleInGrad) {
   let angleInRad = ((2 * Math.PI) / 360) * angleInGrad;
 
   let x = _header_position[0],
-      y = _header_position[1],
-      z = _header_position[2];
+    y = _header_position[1],
+    z = _header_position[2];
 
   addElementToScene(createSlopeXYSegment(x, y, z, size, angleInGrad));
 
@@ -707,111 +707,22 @@ function loadCircuitRepresentation(circuit) {
   load(circuit.tokens.join());
 }
 
-function createTokenContainerTOREMOVE(token) {
-  let container = document.createElement("DIV");
-  container.className = "editor-tokens";
-  container.contentEditable = "true";
-  container.addEventListener("input", changeTextTokenHandler);
-  let editionOptions = document.createElement("DIV");
-  editionOptions.className = "editor-buttons";
-  editionOptions.contentEditable = "false";
-  let buttonRemove = document.createElement("BUTTON");
-  buttonRemove.className = "editor-button";
-  buttonRemove.innerText = "x";
-  buttonRemove.addEventListener("click", removeTokenHandler);
-  let buttonAdd = document.createElement("BUTTON");
-  buttonAdd.className = "editor-button";
-  buttonAdd.innerText = "+";
-  buttonAdd.addEventListener("click", addTokenHandler);
-  editionOptions.appendChild(buttonRemove);
-  editionOptions.appendChild(buttonAdd);
-
-  container.innerText = token;
-  container.appendChild(editionOptions);
-  return container;
-}
-
-function addTokenHandler() {
-  let mainNode = this.parentNode.parentNode;
-  let index = getIndexInCollection(mainNode);
-  let parentElement = mainNode.parentNode;
-  let token = "F 0";
-  parentElement.insertBefore(createTokenContainer(token), mainNode.nextSibling);
-  let circuit = _circuit_handler.getSelectedCircuit();
-  circuit.tokens.splice(index + 1, 0, token);
-}
-
-function removeTokenHandler() {
-  let mainNode = this.parentNode.parentNode;
-  let index = getIndexInCollection(mainNode);
-  mainNode.remove();
-  let circuit = _circuit_handler.getSelectedCircuit();
-  circuit.tokens.splice(index, 1);
-}
-
-function changeTextTokenHandler() {
-  let mainNode = this;
-  let index = getIndexInCollection(mainNode);
-  let circuit = _circuit_handler.getSelectedCircuit();
-  circuit.tokens[index] = this.innerText
-    .substring(0, this.innerText.length - 2)
-    .trim();
-  console.log(`content changed: ${this.innerText}`);
-}
-
-function addCircuit(circuit) {
+function addCircuit_TO_REMOVE(circuit) {
   let new_element = false;
   if (!circuit) {
     circuit = new Circuit("M 0 0 0 N");
     circuit.name = "New circuit";
-    _circuit_handler.setCircuit(circuit);
+    _circuits_collection.addCircuit(circuit);
     new_element = true;
   }
   let element = document.getElementsByClassName("picker")[0];
   let circuitBtn = document.createElement("BUTTON");
   circuitBtn.className = "circuit-button";
-  circuitBtn.addEventListener("click", selectCircuitHandler);
+  circuitBtn.addEventListener("click", selectCircuitHandler_TO_REMOVE);
   circuitBtn.innerHTML = circuit.name;
   element.appendChild(circuitBtn);
   loadCircuitRepresentation(circuit.code);
-  if (new_element) selectCircuit(circuitBtn);
-}
-
-class Circuit {
-  constructor(code, isPattern = false) {
-    this.code = code;
-    this.tokens = code.split(",");
-    this.isPattern = isPattern;
-    this.name = "";
-  }
-}
-
-class CircuitHandler {
-  setCircuit(circuit) {
-    this.circuits.push(circuit);
-  }
-
-  getCircuit(index) {
-    this.selectedCircuit = this.circuits[index];
-    return this.circuits[index];
-  }
-
-  getSelectedCircuit() {
-    return this.selectedCircuit;
-  }
-
-  removeCircuit(index) {
-    this.circuits.splice(index, 1);
-  }
-
-  getNumCircuits() {
-    return this.circuits.length;
-  }
-
-  constructor() {
-    this.circuits = [];
-    this.selectedCircuit = null;
-  }
+  if (new_element) selectCircuit_TO_REMOVE(circuitBtn);
 }
 
 function getIndexInCollection(el) {
@@ -823,13 +734,13 @@ function getIndexInCollection(el) {
   return i - 1;
 }
 
-function selectCircuit(element) {
+function selectCircuit_TO_REMOVE(element) {
   let current = document.getElementsByClassName("active");
   if (current.length > 0)
     current[0].className = current[0].className.replace(" active", "");
   element.className += " active";
   let circuit_idx = getIndexInCollection(element); //TODO: implement with jQuery
-  loadCircuitRepresentation(_circuit_handler.getCircuit(circuit_idx));
+  loadCircuitRepresentation(_circuits_collection.getCircuit(circuit_idx));
 }
 
 function removeCircuit() {
@@ -839,46 +750,16 @@ function removeCircuit() {
   //update UI
   let current_element = current[0];
   current_element.parentNode.removeChild(current_element);
-  _circuit_handler.removeCircuit(circuit_idx);
+  _circuits_collection.removeCircuit(circuit_idx);
   let new_index = Math.max(circuit_idx - 1, 0);
   let elements = document.getElementsByClassName("circuit-button");
   elements[new_index].className += " active";
-  loadCircuitRepresentation(_circuit_handler.getCircuit(new_index));
+  loadCircuitRepresentation(_circuits_collection.getCircuit(new_index));
 }
 
-function selectCircuitHandler() {
-  selectCircuit(this);
+function selectCircuitHandler_TO_REMOVE() {
+  selectCircuit_TO_REMOVE(this);
 }
-
-window.onload = function () {
-  initCircuitRepresentationEngine();
-  animate();
-
-  _circuit_handler = new CircuitHandler();
-  // Add pattern circuits.
-  // fill with the two patterns.
-  let pattern1 = new Circuit(
-    "M -5 -60 1 E,F 10,H 15 15,F 10,L,F 10,H 15 -15,F 10,V 15 30,F 20,V 15 -30,F 10,H 15 15,F 10,L,F 10,H 15 -15,F 20,H 15 15,F 10,L,F 10,H 15 -15,F 10,V 15 30,F 20,V 15 -30,F 10,H 15 15,F 10,L,F 10,H 15 -15,F 10",
-    true
-  );
-  pattern1.name = "Example 1";
-  _circuit_handler.setCircuit(pattern1);
-  addCircuit(pattern1); // TODO: Remove UI interaction
-
-  let pattern2 = new Circuit(
-    "M -30 0 4 E,F 30,V 10 13,L,F 7,V 6 -27,F 5,R,F 4,L,F 29,R,F 16,R,F 40,V 15 25,F 23,R,F 23,L,F 13,R,V 6 -80,F 32,H 17 -23,F 7,R,F 9,L,F 25,R,F 13,R,F 20,M -47 -6 10 E    ,F 57,M -49 -6 4 E,F 60,M -34 -8.5 4 S,V 7 -15,M -21 -8.5 4 S,V 7 -15,M -3 -8.5 4 S,V 7 -15,M 6 -8.5 4 S,V 7 -15,M -34 -8.5 10 S,V 7 -15,M -21 -8.5 10 S,V 7 -15,M -3 -8.5 10 S,V 7 -15,M 6 -8.5 10 S,V 7 -15",
-    true
-  );
-  pattern2.name = "Example 2";
-  _circuit_handler.setCircuit(pattern2);
-  addCircuit(pattern2); // TODO: Remove UI interaction
-  // Add active class to the current button (highlight it)
-  let picker_control = document.getElementsByClassName("picker")[0];
-  let picker_control_buttons = picker_control.getElementsByClassName("circuit-button");
-  for (let i = 0; i < picker_control_buttons.length; i++) {
-    picker_control_buttons[i].addEventListener("click", selectCircuitHandler);
-  }
-};
 
 // functions to open/close side panel
 function openSidePanel() {
@@ -1040,11 +921,13 @@ function validateTokenEdition(event) {
       }
       //update panel presentation
       updatePresentationDiv(last_panel_presentation, new_token);
-      //hide edition panel and show presentation panel.
+      // fire event for update circuit model and view engine representation
+      //TODO
       break;
     case ESC_KEYCODE: //ESC
       break;
   }
+  //hide edition panel and show presentation panel.
   last_panel_presentation.style.display = "block";
   panel_edition_div.style.display = "none";
   _token_index_in_edition_DOM = -1;
@@ -1184,7 +1067,6 @@ function createTokenContainer(token) {
   //  Textbox
   addControlsToTokenEditionContainer(token, editor_div);
   editor_div.addEventListener("keyup", validateTokenEdition);
-  //editor_div.focus();
 
   //DIV options buttons
   let button_remove = document.createElement("BUTTON");
@@ -1203,13 +1085,130 @@ function createTokenContainer(token) {
   return main_container;
 }
 
-function loadTokens(token_str) {
-  let tokens = token_str.split(",");
-  let element = document.getElementsByClassName("token-panel")[0];
-  element.innerHTML = "";
-  for (let token of tokens) {
-    let container = createTokenContainer(token);
-    element.appendChild(container);
+window.onload = function () {
+  let _viewEngine = new ViewEngineWebGL();
+
+  initCircuitViewEngine();
+  animateCircuitViewEngine();
+
+  _circuits_collection = new CircuitsCollection();
+
+  _circuit_picker_handler = new CircuitPickerHandlerDOM(_circuits_collection);
+  _circuit_picker_handler.addCallback("circuitSelected", alert);
+  _circuit_picker_handler.addCallback("circuitRemoved", alert);
+  _circuit_picker_handler.addCallback("circuitAdded", alert);
+  /*
+  this.addCircuit_TO_REMOVE(_circuits_collection.getCircuit(0)); // TODO: Remove UI interaction
+  this.addCircuit_TO_REMOVE(_circuits_collection.getCircuit(1)); // TODO: Remove UI interaction
+  // Add active class to the current button (highlight it)
+  let picker_control = document.getElementsByClassName("picker")[0];
+  let picker_control_buttons = picker_control.getElementsByClassName("circuit-button");
+  for (let i = 0; i < picker_control_buttons.length; i++) {
+    picker_control_buttons[i].addEventListener("click", selectCircuitHandler_TO_REMOVE);
+  }*/
+};
+
+class Circuit {
+  constructor(code, isPattern = false) {
+    this.code = code;
+    this.tokens = code.split(",");
+    this.isPattern = isPattern;
+    this.name = "";
   }
 }
 
+class CircuitsCollection {
+
+  getCircuit(index) {
+    return this.circuits[index];
+  }
+
+  removeCircuit(index) {
+    this.circuits.splice(index, 1);
+  }
+
+  addCircuit(circuit) {
+    this.circuits.push(circuit);
+  }
+
+  total() {
+    return this.circuits.length;
+  }
+
+  constructor() {
+    this.circuits = [];
+    // Add pattern circuits.
+    // fill with the two patterns.
+    let pattern1 = new Circuit(
+      "M -5 -60 1 E,F 10,H 15 15,F 10,L,F 10,H 15 -15,F 10,V 15 30,F 20,V 15 -30,F 10,H 15 15,F 10,L,F 10,H 15 -15,F 20,H 15 15,F 10,L,F 10,H 15 -15,F 10,V 15 30,F 20,V 15 -30,F 10,H 15 15,F 10,L,F 10,H 15 -15,F 10",
+      true
+    );
+    pattern1.name = "Example 1";
+    this.addCircuit(pattern1);
+
+
+    let pattern2 = new Circuit(
+      "M -30 0 4 E,F 30,V 10 13,L,F 7,V 6 -27,F 5,R,F 4,L,F 29,R,F 16,R,F 40,V 15 25,F 23,R,F 23,L,F 13,R,V 6 -80,F 32,H 17 -23,F 7,R,F 9,L,F 25,R,F 13,R,F 20,M -47 -6 10 E    ,F 57,M -49 -6 4 E,F 60,M -34 -8.5 4 S,V 7 -15,M -21 -8.5 4 S,V 7 -15,M -3 -8.5 4 S,V 7 -15,M 6 -8.5 4 S,V 7 -15,M -34 -8.5 10 S,V 7 -15,M -21 -8.5 10 S,V 7 -15,M -3 -8.5 10 S,V 7 -15,M 6 -8.5 10 S,V 7 -15",
+      true
+    );
+    pattern2.name = "Example 2";
+    this.addCircuit(pattern2);
+  }
+}
+
+class CircuitPickerHandlerDOM {
+  constructor(circuits) {
+    this._callbacks = new Map();
+    this._circuits = circuits;
+
+    for (let i = 0; i < this._circuits.total(); i++) {
+      this.addCircuit(this._circuits.getCircuit(i));
+    }
+
+    // Add active class to the current button (highlight it)
+    let picker_control = document.getElementsByClassName("picker")[0];
+    let picker_control_buttons = picker_control.getElementsByClassName("circuit-button");
+    for (let i = 0; i < picker_control_buttons.length; i++) {
+      picker_control_buttons[i].addEventListener("click", selectCircuitHandler_TO_REMOVE);
+    }
+  }
+
+  addCircuit(circuit) {
+    let picker = document.getElementsByClassName("picker")[0];
+    let circuitBtn = document.createElement("BUTTON");
+    circuitBtn.innerHTML = circuit.name;
+    circuitBtn.className = "circuit-button";
+    circuitBtn.addEventListener("click", this.fireSelectCircuit);
+    picker.appendChild(circuitBtn);
+    loadCircuitRepresentation(circuit.code);
+    //if (new_element) selectCircuit(circuitBtn);
+  }
+
+  addCallback(cb_name, cb_function) {
+     this._callbacks.set(cb_name,cb_function);
+  }
+
+  fireSelectCircuit(event_click) {
+    // get the selected circuit
+    let circuit;
+    let cb_functions = this._callbacks.get("circuitSelected");
+    // construct the event to be dispatched
+    for (let cb_name of cb_functions){
+      cb_functions("test. Circuit selected");
+    }
+  }
+}
+
+class TokenEditorDOMHandler {
+
+}
+
+class ViewEngineWebGL {
+  constructor(container) {
+
+  }
+
+  render() { }
+
+  animate() { }
+}
