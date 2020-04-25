@@ -713,11 +713,11 @@ function addNewCircuit() {
 
 function addCircuitToPickerDOMControl(circuit) {
     let element = document.getElementsByClassName("picker")[0];
-    let circuitBtn = document.createElement("BUTTON");
-    circuitBtn.className = "circuit-button";
-    circuitBtn.addEventListener("click", selectCircuitClickHandler);
-    circuitBtn.innerHTML = circuit.name;
-    element.appendChild(circuitBtn);
+    let circuit_button = document.createElement("BUTTON");
+    circuit_button.className = "circuit-button";
+    circuit_button.addEventListener("click", selectCircuitClickHandler);
+    circuit_button.innerHTML = circuit.name;
+    element.appendChild(circuit_button);
 }
 
 function getIndexInCollection(el) {
@@ -916,8 +916,10 @@ function validateTokenEdition(event) {
             }
             //update panel presentation
             updatePresentationDiv(last_panel_presentation, new_token);
-            // fire event for update circuit model and view engine representation
-            //TODO
+            // update circuit model
+
+            // update view engine
+
             break;
         case ESC_KEYCODE: //ESC
             break;
