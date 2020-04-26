@@ -5,6 +5,7 @@ const ESC_KEYCODE = 27;
 const INTRO_KEYCODE = 13;
 
 let _token_index_in_edition_DOM = -1;
+let _circuit_index_selected = -1;
 
 let _renderer,
     _scene,
@@ -692,10 +693,12 @@ function loadCircuitRepresentation(circuit) {
     let element = document.getElementsByClassName("token-panel")[0];
     element.innerHTML = "";
 
-    // remove the circuit previously load in the View Engine
+    //remove the circuit previously load in the View Engine
     removeCircuitFromScene();
+
+    //load tokens
     for (let token of circuit.tokens) {
-        let container = createTokenContainer(token);
+        let container = createTokenContainer(token, circuit.isPattern);
         element.appendChild(container);
     }
 
@@ -708,6 +711,16 @@ function addNewCircuit() {
     circuit.name = "New circuit";
     _circuits.addCircuit(circuit);
     addCircuitToPickerDOMControl(circuit);
+    selectCircuitFromPickerDOM(_circuits.total() - 1);
+}
+
+function copyCircuit() {
+    //let circuits_DOM = document.getElementsByClassName("picker")[0];
+    let circuit_to_copy = _circuits.getCircuit(_circuit_index_selected);
+    let new_circuit = circuit_to_copy.copy();
+    new_circuit.name += " (copy)";
+    _circuits.addCircuit(new_circuit);
+    addCircuitToPickerDOMControl(new_circuit);
     selectCircuitFromPickerDOM(_circuits.total() - 1);
 }
 
@@ -730,13 +743,21 @@ function getIndexInCollection(el) {
 }
 
 function selectCircuitFromPickerDOM(index) {
+    _circuit_index_selected = index;
+    let circuit = _circuits.getCircuit(index);
+    // update picker
     let current = document.getElementsByClassName("active");
     if (current.length > 0)
         current[0].className = current[0].className.replace(" active", "");
     let elements = document.getElementsByClassName("circuit-button");
     let element = elements[index];
     element.className += " active";
-    loadCircuitRepresentation(_circuits.getCircuit(index));
+    // update picker options    
+    document.getElementById("buttonRenameCircuit").disabled = false || circuit.isPattern;
+    document.getElementById("buttonCopyCircuit").disabled = false;
+    document.getElementById("buttonRemoveCircuit").disabled = false || circuit.isPattern;
+    // update View Engine
+    loadCircuitRepresentation(circuit);
 }
 
 function removeCircuit() {
@@ -748,9 +769,7 @@ function removeCircuit() {
     current_element.parentNode.removeChild(current_element);
     _circuits.removeCircuit(circuit_idx);
     let new_index = Math.max(circuit_idx - 1, 0);
-    let elements = document.getElementsByClassName("circuit-button");
-    elements[new_index].className += " active";
-    loadCircuitRepresentation(_circuits.getCircuit(new_index));
+    selectCircuitFromPickerDOM(new_index);
 }
 
 function selectCircuitClickHandler() {
@@ -816,7 +835,7 @@ function getActionFromTokenLabel(label) {
             parameters.push({ label: "x", value: parameters_items[0] });
             parameters.push({ label: "y", value: parameters_items[1] });
             parameters.push({ label: "z", value: parameters_items[2] });
-            parameters.push({ label: "direction", value: parameters_items[3] });
+            parameters.push({ label: "dir", value: parameters_items[3] });
             break;
         case "F":
             action_text = "forward";
@@ -860,16 +879,18 @@ function addTokenContainerHandler() {
     let parent_element = main_node.parentNode;
     let token = "F 10";
     parent_element.insertBefore(createTokenContainer(token), main_node.nextSibling);
-    // let circuit = circuitHandler.getSelectedCircuit();
-    // circuit.tokens.splice(index + 1, 0, token);
+    let circuit = _circuits.getCircuit(_circuit_index_selected);
+    circuit.tokens.splice(index + 1, 0, token);
+    loadCircuitRepresentation(circuit);
 }
 
 function removeTokenContainerHandler() {
     let main_node = this.parentNode.parentNode;
     let index = getIndexInDOMCollection(main_node);
     main_node.remove();
-    // let circuit = circuitHandler.getSelectedCircuit();
-    // circuit.tokens.splice(index, 1);
+    let circuit = _circuits.getCircuit(_circuit_index_selected);
+    circuit.tokens.splice(index, 1);
+    loadCircuitRepresentation(circuit);
 }
 
 function createDOMInputElement(value) {
@@ -917,9 +938,10 @@ function validateTokenEdition(event) {
             //update panel presentation
             updatePresentationDiv(last_panel_presentation, new_token);
             // update circuit model
-
+            let circuit = _circuits.getCircuit(_circuit_index_selected);
+            circuit.updateToken(new_token, _token_index_in_edition_DOM);
             // update view engine
-
+            loadCircuitRepresentation(circuit)
             break;
         case ESC_KEYCODE: //ESC
             break;
@@ -1026,7 +1048,7 @@ function updatePresentationDiv(div, token) {
     div.title = token;
 }
 
-function createTokenContainer(token) {
+function createTokenContainer(token, is_pattern = false) {
     let main_container = document.createElement("DIV");
     main_container.className = "token-panel-item";
 
@@ -1035,50 +1057,56 @@ function createTokenContainer(token) {
     presentation_div.className = "token-panel-presentation";
     updatePresentationDiv(presentation_div, token);
 
-    let editor_div = document.createElement("DIV");
-    let buttons_div = document.createElement("DIV");
-    editor_div.className = "token-panel-editor";
-    buttons_div.className = "token-panel-editor-options";
+    let editor_div, buttons_div;
+    if (!is_pattern) {
+        editor_div = document.createElement("DIV");
+        buttons_div = document.createElement("DIV");
+        editor_div.className = "token-panel-editor";
+        buttons_div.className = "token-panel-editor-options";
 
-    main_container.appendChild(buttons_div);
+        main_container.appendChild(buttons_div);
+    }
+
     main_container.appendChild(presentation_div);
-    main_container.appendChild(editor_div);
-    presentation_div.addEventListener("click", showTokenEdition);
 
-    //DIV edition
-    editor_div.style.display = "none";
-    editor_div.tabIndex = "0";
-    //  Select option.
-    let select_actions = document.createElement("SELECT");
-    addActionToDropDownHtmlControl(select_actions, "move", "M");
-    addActionToDropDownHtmlControl(select_actions, "forward", "F");
-    addActionToDropDownHtmlControl(select_actions, "horizontal", "H");
-    addActionToDropDownHtmlControl(select_actions, "vertical", "V");
-    addActionToDropDownHtmlControl(select_actions, "left", "L");
-    addActionToDropDownHtmlControl(select_actions, "right", "R");
-    select_actions.className = "select-css";
-    select_actions.value = token[0];
-    select_actions.addEventListener("change", changeDOMControlsInEditorPanel);
-    select_actions.addEventListener("keydown", validateTokenEdition);
-    editor_div.appendChild(select_actions);
-    //  Textbox
-    addControlsToTokenEditionContainer(token, editor_div);
-    editor_div.addEventListener("keyup", validateTokenEdition);
+    if (!is_pattern) {
+        main_container.appendChild(editor_div);
+        presentation_div.addEventListener("click", showTokenEdition);
 
-    //DIV options buttons
-    let button_remove = document.createElement("BUTTON");
-    button_remove.className = "token-panel-editor-button";
-    button_remove.innerText = "x";
-    button_remove.addEventListener("click", removeTokenContainerHandler);
+        //DIV edition
+        editor_div.style.display = "none";
+        editor_div.tabIndex = "0";
+        //  Select option.
+        let select_actions = document.createElement("SELECT");
+        addActionToDropDownHtmlControl(select_actions, "move", "M");
+        addActionToDropDownHtmlControl(select_actions, "forward", "F");
+        addActionToDropDownHtmlControl(select_actions, "horizontal", "H");
+        addActionToDropDownHtmlControl(select_actions, "vertical", "V");
+        addActionToDropDownHtmlControl(select_actions, "left", "L");
+        addActionToDropDownHtmlControl(select_actions, "right", "R");
+        select_actions.className = "select-css";
+        select_actions.value = token[0];
+        select_actions.addEventListener("change", changeDOMControlsInEditorPanel);
+        select_actions.addEventListener("keydown", validateTokenEdition);
+        editor_div.appendChild(select_actions);
+        //  Textbox
+        addControlsToTokenEditionContainer(token, editor_div);
+        editor_div.addEventListener("keyup", validateTokenEdition);
 
-    let button_add = document.createElement("BUTTON");
-    button_add.className = "token-panel-editor-button";
-    button_add.innerText = "+";
-    button_add.addEventListener("click", addTokenContainerHandler);
+        //DIV options buttons
+        let button_remove = document.createElement("BUTTON");
+        button_remove.className = "token-panel-editor-button";
+        button_remove.innerText = "x";
+        button_remove.addEventListener("click", removeTokenContainerHandler);
 
-    buttons_div.appendChild(button_remove);
-    buttons_div.appendChild(button_add);
+        let button_add = document.createElement("BUTTON");
+        button_add.className = "token-panel-editor-button";
+        button_add.innerText = "+";
+        button_add.addEventListener("click", addTokenContainerHandler);
 
+        buttons_div.appendChild(button_remove);
+        buttons_div.appendChild(button_add);
+    }
     return main_container;
 }
 
@@ -1099,6 +1127,17 @@ class Circuit {
         this.tokens = code.split(",");
         this.isPattern = isPattern;
         this.name = "";
+    }
+
+    copy() {
+        let newCircuit = new Circuit(this.code);
+        newCircuit.name = this.name;
+        return newCircuit;
+    }
+
+    updateToken(new_token, index) {
+        this.tokens[index] = new_token;
+        this.code = this.tokens.join();
     }
 }
 
