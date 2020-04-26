@@ -1,39 +1,25 @@
-3D Javascript play with three.js
+#3D Javascript play with three.js
 
-After experimenting a little with threeJS I managed to have a very basic playground for creating circuits using elemental operations as: 
-- Establish header position (Parameters x, y, z, orientation). 
-- Add linear segment in the direction of the header (Parameters length). 
-- Add segment with horizontal slope (XY) (Parameters length, angleInGrads).
-- Add segment with vertical slope (XZ) (Parameters length, angleInGrads).
-- Add turn to left segment (No parameters). 
-- Add turn to right segment (No parameters). 
+##Goals
+Experiment with 3D graphics using WebGL via Three JS
+Experiment with DOM manipulation with a Vanilla JS approach. 
+Study basic code organization for JS code base. You know, everything goes tangled very easilty while manipulating DOM and keep sync with models and other stuff. 
+Set a play arena for future investigations. 
 
-I like to set the following goals: 
+##Description
+JS client application able to create circuits based on the following very basic set of operations: 
+- Establish header position (Parameters x, y, z, orientation). Token: M x y z direction (e. g. M 0 0 0 S)   
+- Add linear segment in the direction of the header (Parameters length). Token: F length (e. g. F 20)
+- Add segment with horizontal slope (XY) (Parameters length, angleInGrads). Token: H length degrees    
+- Add segment with vertical slope (XZ) (Parameters length, angleInGrads).Token:  V length degrees
+- Add turn to left segment (No parameters). Token: L 
+- Add turn to right segment (No parameters). Token: R
 
-* Refactor the code base to avoid global objects, improve encapsulation and prepare to test math operations (Not implement in the first phase).
-
-* Create a raw format for the two circuits example. (No error handling at the first shot, added with testing)
-  - Establish header position (Parameters x, y, z, orientation).
-      M x y z direction
-  - Add linear segment in the direction of the header (Parameters length).
-      F length
-  - Add segment with horizontal slope (XY) (Parameters length, angleInGrads).
-      H length degrees    
-  - Add segment with vertical slope (XZ) (Parameters length, angleInGrads).
-      V length degrees
-  - Add turn to left segment (No parameters). 
-      L 
-  - Add turn to right segment (No parameters). 
-      R
-  For instance: M 0 0 0 N,F 30,L,F 100,V 30,F 100,H -30,F10
-
-* Relate the graphic object with a business object to be manipulated and keep them sync. 
-
-* Add GUI support for viewing the format, the objects and similar stuff. 
-
-* Reset the camera to the origin 
+Example circuit:  M 0 0 0 N,F 30,L,F 100,V 30,F 100,H -30,F10
 
 For localtunnel use backup server if problems: 
 - lt -h "http://serverless.social" -p PORT
 
-Try collapse side panel from https://www.w3schools.com/howto/tryit.asp?filename=tryhow_js_collapse_sidepanel
+Collapse Side panel from https://www.w3schools.com/howto/tryit.asp?filename=tryhow_js_collapse_sidepanel
+Select style from https://www.filamentgroup.com/lab/select-css.html
+
