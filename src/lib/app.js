@@ -1178,7 +1178,7 @@ class Circuit {
     remove() {
         if (this.guid) {
             window.localStorage.removeItem(this.guid);
-            let circuit_guids = localStorage.getItem("_circuits");
+            let circuit_guids = window.localStorage.getItem("_circuits");
             if (!circuit_guids) return;
             let guids_tokens = circuit_guids.split('|');
             let new_guids = "";
@@ -1252,11 +1252,11 @@ class CircuitsCollection {
         this.addCircuit(pattern2);
 
         // load circuits from local storage;
-        var circuit_guids = localStorage.getItem("_circuits");
+        let circuit_guids = window.localStorage.getItem("_circuits");
         if (circuit_guids) {
-            var guids = circuit_guids.split("|");
+            let guids = circuit_guids.split("|");
             for (let guid of guids) {
-                let circuit_info = localStorage.getItem(guid);
+                let circuit_info = window.localStorage.getItem(guid);
                 if (circuit_info) {
                     let circuit_obj = Circuit.load(guid);
                     this.addCircuit(circuit_obj);
