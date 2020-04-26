@@ -724,6 +724,11 @@ function copyCircuit() {
     selectCircuitFromPickerDOM(_circuits.total() - 1);
 }
 
+function saveCircuit() {
+    let circuit_to_save = _circuits.getCircuit(_circuit_index_selected);
+    circuit_to_save.save();
+}
+
 function addCircuitToPickerDOMControl(circuit) {
     let element = document.getElementsByClassName("picker")[0];
     let circuit_button = document.createElement("BUTTON");
@@ -753,6 +758,7 @@ function selectCircuitFromPickerDOM(index) {
     let element = elements[index];
     element.className += " active";
     // update picker options    
+    document.getElementById("buttonSaveCircuit").disabled = false || circuit.isPattern;
     document.getElementById("buttonRenameCircuit").disabled = false || circuit.isPattern;
     document.getElementById("buttonCopyCircuit").disabled = false;
     document.getElementById("buttonRemoveCircuit").disabled = false || circuit.isPattern;
@@ -767,6 +773,10 @@ function removeCircuit() {
     //update UI
     let current_element = current[0];
     current_element.parentNode.removeChild(current_element);
+    //update local storage if apply
+    let circuit_to_remove = _circuits.getCircuit(circuit_idx);
+    circuit_to_remove.remove();
+    //update model
     _circuits.removeCircuit(circuit_idx);
     let new_index = Math.max(circuit_idx - 1, 0);
     selectCircuitFromPickerDOM(new_index);
@@ -1127,6 +1137,7 @@ class Circuit {
         this.tokens = code.split(",");
         this.isPattern = isPattern;
         this.name = "";
+        this.guid = null;
     }
 
     copy() {
@@ -1138,6 +1149,68 @@ class Circuit {
     updateToken(new_token, index) {
         this.tokens[index] = new_token;
         this.code = this.tokens.join();
+    }
+
+    save() {
+        if (this.guid == null) {
+            this.guid = this.uuidv4();
+        }
+        window.localStorage.setItem(this.guid, `${this.name}|${this.tokens.join()}`);
+        let circuits = window.localStorage.getItem("_circuits");
+        if (!circuits) {
+            circuits = this.guid;
+        } else {
+            let circuits_guids_tokens = circuits.split('|');
+            let exists_token = false;
+            for (let circuit_guid of circuits_guids_tokens) {
+                if (circuit_guid == this.guid) {
+                    exists_token = true;
+                    break;
+                }
+            }
+            if (!exists_token) {
+                circuits += "|" + this.guid
+            };
+        }
+        window.localStorage.setItem("_circuits", circuits);
+    }
+
+    remove() {
+        if (this.guid) {
+            window.localStorage.removeItem(this.guid);
+            let circuit_guids = localStorage.getItem("_circuits");
+            if (!circuit_guids) return;
+            let guids_tokens = circuit_guids.split('|');
+            let new_guids = "";
+            for (let circuit_guid of guids_tokens) {
+                if (circuit_guid != this.guid) {
+                    if (new_guids != "") new_guids += "|";
+                    new_guids += circuit_guid;
+                }
+            }
+            window.localStorage.setItem("_circuits", new_guids);
+        }
+    }
+
+    static load(guid) {
+        var circuit_str = window.localStorage.getItem(guid);
+        if (!circuit_str) {
+            return null;
+        }
+        var circuit_tokens = circuit_str.split('|');
+        var circuit = new Circuit(circuit_tokens[1], false);
+        circuit.name = circuit_tokens[0];
+        circuit.guid = guid;
+        return circuit;
+    }
+
+    // from https://stackoverflow.com/questions/105034/how-to-create-guid-uuid
+    uuidv4() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            var r = Math.random() * 16 | 0,
+                v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
     }
 }
 
@@ -1177,5 +1250,18 @@ class CircuitsCollection {
         );
         pattern2.name = "Example 2";
         this.addCircuit(pattern2);
+
+        // load circuits from local storage;
+        var circuit_guids = localStorage.getItem("_circuits");
+        if (circuit_guids) {
+            var guids = circuit_guids.split("|");
+            for (let guid of guids) {
+                let circuit_info = localStorage.getItem(guid);
+                if (circuit_info) {
+                    let circuit_obj = Circuit.load(guid);
+                    this.addCircuit(circuit_obj);
+                }
+            }
+        }
     }
 }
