@@ -789,7 +789,7 @@ function selectCircuitClickHandler() {
 
 // functions to open/close side panel
 function openSidePanel() {
-    document.getElementById("circuitPickerSidePanel").style.width = "450px";
+    document.getElementById("circuitPickerSidePanel").style.width = "360px";
 }
 
 function closeSidePanel() {
