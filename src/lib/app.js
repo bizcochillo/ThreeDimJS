@@ -689,7 +689,7 @@ function createSlopeXYSegment(x, y, z, length, angleInGrad) {
 }
 
 function loadCircuitRepresentation(circuit) {
-    //Initialize the tokens list to emtpy in DOM. 
+    //Initialize the tokens list to emtpy in DOM.
     let element = document.getElementsByClassName("token-panel")[0];
     element.innerHTML = "";
 
@@ -702,7 +702,7 @@ function loadCircuitRepresentation(circuit) {
         element.appendChild(container);
     }
 
-    //Load the circuit in the View Engine. 
+    //Load the circuit in the View Engine.
     loadCircuitInViewEngine(circuit.tokens.join());
 }
 
@@ -757,7 +757,7 @@ function selectCircuitFromPickerDOM(index) {
     let elements = document.getElementsByClassName("circuit-button");
     let element = elements[index];
     element.className += " active";
-    // update picker options    
+    // update picker options
     document.getElementById("buttonSaveCircuit").disabled = false || circuit.isPattern;
     document.getElementById("buttonRenameCircuit").disabled = false || circuit.isPattern;
     document.getElementById("buttonCopyCircuit").disabled = false;
@@ -789,7 +789,7 @@ function selectCircuitClickHandler() {
 
 // functions to open/close side panel
 function openSidePanel() {
-    document.getElementById("circuitPickerSidePanel").style.width = "360px";
+    document.getElementById("circuitPickerSidePanel").style.width = "405px";
 }
 
 function closeSidePanel() {
