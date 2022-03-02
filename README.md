@@ -1,10 +1,10 @@
 # 3D Javascript play with three.js
 
 ## Goals
-Experiment with 3D graphics using WebGL via Three JS
-Experiment with DOM manipulation with a Vanilla JS approach. 
-Study basic code organization for JS code base. You know, everything goes tangled very easilty while manipulating DOM and keep sync with models and other stuff. 
-Set a play arena for future investigations. 
+Experiment with 3D graphics using WebGL via Three JS  
+Experiment with DOM manipulation with a Vanilla JS approach.  
+Study basic code organization for JS code base. You know, everything goes tangled very easilty while manipulating DOM and keep sync with models and other stuff.  
+Set a play arena for future investigations.  
 
 ## Description
 JS client application able to create circuits based on the following very basic set of operations: 
@@ -22,6 +22,6 @@ Example circuit:  `M 0 0 0 N,F 30,L,F 100,V 30,F 100,H -30,F10`
 For localtunnel use backup server if problems: 
 - `lt -h "http://serverless.social" -p PORT`
 
-- Collapse Side panel from https://www.w3schools.com/howto/tryit.asp?filename=tryhow_js_collapse_sidepanel
-- Select style from https://www.filamentgroup.com/lab/select-css.html
+Collapse Side panel from https://www.w3schools.com/howto/tryit.asp?filename=tryhow_js_collapse_sidepanel  
+Select style from https://www.filamentgroup.com/lab/select-css.html
 
